@@ -1,0 +1,33 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap');
+
+:root {
+    --color-bg:       #0a0d14;
+    --color-bg2:      #0f1520;
+    --color-gold:     #d4a017;
+    --color-gold2:    #f0c040;
+    --color-ember:    #e8622a;
+    --color-steel:    #8a9ba8;
+    --color-frost:    #7ec8e3;
+    --color-red:      #9b2020;
+    --color-earth:    #5d4037;
+    --font-heading:   'Cinzel Decorative', serif;
+    --font-title:     'Cinzel', serif;
+    --font-body:      'Crimson Text', serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+    width: 100%; height: 100%;
+    background: var(--color-bg);
+    font-family: var(--font-body);
+    overflow: hidden;
+    cursor: crosshair;
+}
+
+#gameCanvas {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+    image-rendering: pixelated;
+}
