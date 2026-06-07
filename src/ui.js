@@ -1,5 +1,5 @@
 import { drawHealthBar, spawnTorchParticle } from './canvas.js';
-import { formatGold, getDisplayedGold, idleGoldPerHour, roundRect } from './utils.js';
+import { formatGold, getDisplayedGold, idleGoldPerHour, roundPct, roundRect } from './utils.js';
 
 // Torch positions relative to barricade — filled in drawBarricade, used by HUD tick
 let _torchPositions = [];
@@ -71,21 +71,16 @@ function drawRunStatPanel(ctx, W, H, state, barH) {
     ctx.font = `bold 11px 'Cinzel', serif`;
     ctx.fillText('RUN STATS', panelX + 12, panelY + 16);
 
-    const now = Date.now();
-    if (!_cachedRunStatRows || _cachedRunStartedAt !== state.runStartedAt || now - _lastRunStatUpdate >= 1000) {
-        const displayWave = Math.min((state.currentWave || 0) + 1, 20);
-        _lastRunStatUpdate = now;
-        _cachedRunStartedAt = state.runStartedAt;
-        _cachedRunStatRows = [
-            ['Party DPS', formatStatNumber(getPartyDps(state))],
-            ['Gold earned', formatGold(state.sessionGold || 0)],
-            ['Gold / min', `${formatStatNumber(getGoldPerMinute(state))}/m`],
-            ['Offline rate', `${formatGold(idleGoldPerHour(state.highestUnlockedLevel || 0))}/hr`],
-            ['Progress', `Lv ${state.currentLevel + 1} • Wave ${displayWave}/20`]
-        ];
-    }
+    const displayWave = Math.min((state.currentWave || 0) + 1, 20);
+    const rows = [
+        ['Party DPS', formatStatNumber(getPartyDps(state))],
+        ['Gold earned', formatGold(state.sessionGold || 0)],
+        ['Gold / min', `${formatStatNumber(getGoldPerMinute(state))}/m`],
+        ['Offline rate', `${formatGold(idleGoldPerHour(state.highestUnlockedLevel || 0))}/hr`],
+        ['Progress', `Lv ${state.currentLevel + 1} • Wave ${displayWave}/20`]
+    ];
 
-    _cachedRunStatRows.forEach(([label, value], i) => {
+    rows.forEach(([label, value], i) => {
         const y = panelY + 38 + i * 17;
         ctx.fillStyle = 'rgba(210,196,160,0.72)';
         ctx.font = `10px 'Crimson Text', serif`;
