@@ -12,6 +12,8 @@ export const state = {
     barricade: { hp: 500, maxHp: 500, dead: false },
     floatingTexts: [],
     gold: 0,
+    displayGold: 0,
+    goldDisplayTimer: 0,
     shards: { astrid: 0, hilda: 0, bjorn: 0 },
     permanentUpgrades: {
         astrid: { atk: 0, income: 0, atkSpeed: 0 },

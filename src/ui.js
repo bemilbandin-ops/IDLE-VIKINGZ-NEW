@@ -1,9 +1,12 @@
 import { drawHealthBar, spawnTorchParticle } from './canvas.js';
-import { formatGold, idleGoldPerHour, roundRect } from './utils.js';
+import { formatGold, getDisplayedGold, idleGoldPerHour, roundPct, roundRect } from './utils.js';
 
 // Torch positions relative to barricade — filled in drawBarricade, used by HUD tick
 let _torchPositions = [];
 let _torchTimer = 0;
+let _lastRunStatUpdate = 0;
+let _cachedRunStatRows = null;
+let _cachedRunStartedAt = 0;
 
 // Returns the Y coordinate of the top of the hero panel — the visual "front line" of heroes.
 // Projectiles should spawn here, not at hero.y (which is a game-logic coord with no sprite).
@@ -184,7 +187,7 @@ export function drawHUD(ctx, W, H, state) {
     ctx.fillStyle = '#f0c040';
     ctx.font = `bold ${Math.round(barH * 0.38)}px 'Cinzel', serif`;
     ctx.shadowColor = '#d4a017'; ctx.shadowBlur = 8;
-    ctx.fillText(formatGold(state.gold), goldRight, barH * 0.65);
+    ctx.fillText(formatGold(getDisplayedGold(state)), goldRight, barH * 0.65);
     ctx.shadowBlur = 0;
 
     drawRunStatPanel(ctx, W, H, state, barH);

@@ -10,6 +10,10 @@ export function lerp(a, b, t) {
     return a + (b - a) * t;
 }
 
+export function getDisplayedGold(state) {
+    return typeof state.displayGold === 'number' ? state.displayGold : (state.gold || 0);
+}
+
 export function formatGold(n) {
     if (n >= 1000000) return Math.floor(n / 1000000) + 'M';
     if (n >= 1000) return Math.floor(n / 1000) + 'K';

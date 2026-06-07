@@ -1,6 +1,6 @@
 // ── Screens — Full visual overhaul ───────────────────────────────────────────
 
-import { roundRect, hexToRgb, saveGameState, getShopPanelDims, getHeroUpgradePanelDims } from './utils.js';
+import { roundRect, hexToRgb, saveGameState, getShopPanelDims, getHeroUpgradePanelDims, getDisplayedGold } from './utils.js';
 
 const T = () => Date.now();
 
@@ -69,7 +69,7 @@ export function drawTitleScreen(ctx, W, H, state) {
     ctx.shadowBlur = 0;
 
     // Gold display top-right
-    drawGoldBadge(ctx, W - 16, 16, state.gold);
+    drawGoldBadge(ctx, W - 16, 16, getDisplayedGold(state));
 
     // Buttons
     const btnW = 240, btnH = 52;
@@ -335,7 +335,7 @@ function drawShopOverlay(ctx, W, H, state) {
     ctx.shadowBlur = 0;
 
     // Gold
-    drawGoldBadge(ctx, W / 2, pY + pH * 0.16, state.gold, true);
+    drawGoldBadge(ctx, W / 2, pY + pH * 0.16, getDisplayedGold(state), true);
 
     // Items
     state.shopItems.forEach((item, i) => {
@@ -391,7 +391,7 @@ function drawHeroUpgradeOverlay(ctx, W, H, state) {
     ctx.fillText('HERO UPGRADES', W / 2, pY + pH * 0.08);
     ctx.shadowBlur = 0;
 
-    drawGoldBadge(ctx, W / 2, pY + pH * 0.15, state.gold, true);
+    drawGoldBadge(ctx, W / 2, pY + pH * 0.15, getDisplayedGold(state), true);
 
     const HEROES = [
         { id: 'astrid', name: 'Astrid', title: 'The Archer', emoji: '🏹', color: '#c8962a', glow: '#f0c040' },
