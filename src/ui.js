@@ -1,5 +1,5 @@
 import { drawHealthBar, spawnTorchParticle } from './canvas.js';
-import { formatGold, getDisplayedGold, idleGoldPerHour, roundPct, roundRect } from './utils.js';
+import { formatGold, getDisplayedGold, idleGoldPerHour, roundRect } from './utils.js';
 
 // Torch positions relative to barricade — filled in drawBarricade, used by HUD tick
 let _torchPositions = [];
