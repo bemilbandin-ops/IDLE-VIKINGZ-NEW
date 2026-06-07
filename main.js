@@ -9,10 +9,7 @@ import { updateProjectiles, updateCombatEffects } from './src/projectiles.js';
 import { levels } from './data/levels.js';
 import { gearPool } from './data/gear.js';
 import { saveGameState } from './src/utils.js';
-<<<<<<< HEAD
-=======
 import { autoPickRandomSkill } from './src/skills.js';
->>>>>>> d12e53c (hp bars, more levels etc)
 import { checkAchievements, getAchievementIncomeMultiplier, getAchievementOfflineMultiplier, grantGold } from './src/achievements.js';
 
 window._gearData = { gearPool };
@@ -33,10 +30,7 @@ function idleGoldPerSecond(state) {
 
 // Load saved progress on startup
 loadProgress(state);
-<<<<<<< HEAD
-=======
 state.gameSpeed = state.autoPickSkills ? 2 : 1;
->>>>>>> d12e53c (hp bars, more levels etc)
 state.displayGold = state.gold;
 
 // ── Pause/resume when tab is hidden ─────────────────────────────────────────
@@ -209,22 +203,15 @@ function update(dt) {
         if (state.pendingSkillChoice && state.autoPickSkills) autoPickRandomSkill(state);
         if (state.pendingSkillChoice) return;
 
-<<<<<<< HEAD
-        const combatDt = dt * (state.gameSpeed || 1);
-=======
         state.gameSpeed = state.autoPickSkills ? 2 : 1;
         const combatDt = dt * state.gameSpeed;
->>>>>>> d12e53c (hp bars, more levels etc)
         const hpBefore = {};
         state.monsters.forEach(m => { hpBefore[m.id] = m.hp; });
 
         updateMonsters(state, combatDt);
         heroAttackTick(state, combatDt);
         updateProjectiles(state, combatDt);
-<<<<<<< HEAD
-=======
         updateCombatEffects(state, combatDt);
->>>>>>> d12e53c (hp bars, more levels etc)
         updateFloatingTexts(state, combatDt);
         checkWaveComplete(state, combatDt);
         checkAchievements(state);
