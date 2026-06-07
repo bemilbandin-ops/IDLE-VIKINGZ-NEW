@@ -1,5 +1,5 @@
-import { drawHealthBar, spawnTorchParticle, drawHeroShape } from './canvas.js';
-import { formatGold, hexToRgb, roundRect } from './utils.js';
+import { drawHealthBar, spawnTorchParticle } from './canvas.js';
+import { formatGold, roundRect } from './utils.js';
 
 // Torch positions relative to barricade — filled in drawBarricade, used by HUD tick
 let _torchPositions = [];
@@ -102,21 +102,22 @@ export function drawHUD(ctx, W, H, state) {
     ctx.fillStyle = '#7ec8e3';
     ctx.fillRect(xBarX, xBarY, xBarW * xpPct, 3);
 
-    // ─ Right: Gold
+    // ─ Right: Gold, kept left of the Quit button
+    const goldRight = Math.min(W * 0.76, W - 132);
     ctx.textAlign = 'right';
     ctx.fillStyle = 'rgba(212,160,23,0.5)';
     ctx.font = `10px 'Cinzel', serif`;
-    ctx.fillText('GOLD', W * 0.97, barH * 0.25);
+    ctx.fillText('GOLD', goldRight, barH * 0.25);
 
     // Coin icon
-    const coinX = W * 0.97 - 48;
+    const coinX = goldRight - 48;
     const coinY = barH * 0.62;
     drawCoin(ctx, coinX, coinY, 10);
 
     ctx.fillStyle = '#f0c040';
     ctx.font = `bold ${Math.round(barH * 0.38)}px 'Cinzel', serif`;
     ctx.shadowColor = '#d4a017'; ctx.shadowBlur = 8;
-    ctx.fillText(formatGold(state.gold), W * 0.97, barH * 0.65);
+    ctx.fillText(formatGold(state.gold), goldRight, barH * 0.65);
     ctx.shadowBlur = 0;
 }
 
@@ -139,16 +140,9 @@ function drawCoin(ctx, x, y, r) {
 }
 
 // ── Hero Panel ─────────────────────────────────────────────────────────────
-const HERO_ICONS = {
-    astrid: { emoji: '🏹', color: '#c8962a', glow: '#ffaa00', title: 'THE ARCHER' },
-    hilda:  { emoji: '❄️',  color: '#4a8fa8', glow: '#7ec8e3', title: 'THE VÖLVA'  },
-    bjorn:  { emoji: '⚡',  color: '#00aaff', glow: '#00f0ff', title: 'THE THUNDERBRINGER' }
-};
-
 export function drawHeroPanel(ctx, W, H, state) {
     const panelH = Math.max(110, H * 0.16);
     const panelY = H - panelH;
-    const heroSz = Math.min(panelH * 0.44, 54);
     const t = Date.now();
 
     // Panel bg
@@ -162,31 +156,44 @@ export function drawHeroPanel(ctx, W, H, state) {
     ctx.strokeStyle = 'rgba(212,160,23,0.3)'; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(0, panelY + 3); ctx.lineTo(W, panelY + 3); ctx.stroke();
 
-    const spacing = Math.min(W * 0.22, 200);
-    const totalW = spacing * 3;
-    const startX = W / 2 - totalW / 2 + spacing / 2;
+    const spacing = Math.min(Math.max(W * 0.26, 150), 260);
+    const totalW = spacing * 2;
+    const startX = W / 2 - totalW / 2;
 
     state.heroes.forEach((hero, i) => {
         const cx = startX + i * spacing;
         const heroY = panelY + panelH * 0.46;
 
-        // Draw geometric hero shape (replaces emoji box)
-        drawHeroShape(ctx, cx, heroY, heroSz, hero.id, hero.hp, hero.maxHp, hero.dead, t);
-
-        // Name
+        // Keep the old orb model hidden. The SVG hero model is drawn by assets/visualPatch.js.
         const HERO_CFG = { astrid:'#ffb432', hilda:'#50c8ff', bjorn:'#ff64c8' };
-        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        ctx.save();
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = 'rgba(0,0,0,0.42)';
+        roundRect(ctx, cx - 48, heroY + panelH * 0.20, 96, 30, 9);
+        ctx.fill();
+        ctx.strokeStyle = hero.dead ? '#333' : `${HERO_CFG[hero.id] || '#d4a017'}88`;
+        ctx.lineWidth = 1;
+        roundRect(ctx, cx - 48, heroY + panelH * 0.20, 96, 30, 9);
+        ctx.stroke();
         ctx.fillStyle = hero.dead ? '#555' : (HERO_CFG[hero.id] || '#d4a017');
         ctx.font = `bold 10px 'Cinzel', serif`;
-        ctx.fillText((hero.name || hero.id).toUpperCase(), cx, panelY + panelH * 0.80);
+        ctx.fillText((hero.name || hero.id).toUpperCase(), cx, heroY + panelH * 0.28);
+        ctx.font = `bold 12px 'Cinzel', serif`;
+        ctx.fillStyle = hero.dead ? '#777' : '#fff3b0';
+        ctx.shadowColor = hero.dead ? '#000' : (HERO_CFG[hero.id] || '#d4a017');
+        ctx.shadowBlur = hero.dead ? 0 : 6 + Math.sin(t * 0.004 + i) * 2;
+        ctx.fillText(`LV ${state.party.level}`, cx, heroY + panelH * 0.42);
+        ctx.shadowBlur = 0;
 
         // HP bar
-        const hpW = heroSz * 1.2, hpH = 5;
+        const hpW = 74, hpH = 5;
         const hpX = cx - hpW / 2;
-        const hpY = panelY + panelH * 0.88;
+        const hpY = heroY + panelH * 0.55;
         const hpPct = hero.hp / hero.maxHp;
         const hpColor = hero.dead ? '#333' : hpPct > 0.5 ? '#4caf50' : hpPct > 0.25 ? '#ff9800' : '#f44336';
         drawHealthBar(ctx, hpX, hpY, hpW, hpH, hpPct, hpColor, !hero.dead);
+        ctx.restore();
     });
 }
 
@@ -346,9 +353,4 @@ function drawTorch(ctx, x, y) {
     ctx.quadraticCurveTo(x + 3 + Math.sin(t * 0.8) * 2, y - 15, x + 3, y - 4);
     ctx.closePath(); ctx.fill();
     ctx.shadowBlur = 0;
-}
-
-// ── Helpers ────────────────────────────────────────────────────────────────
-function roundRect2(ctx, x, y, w, h, r) {
-    roundRect(ctx, x, y, w, h, r);
 }
