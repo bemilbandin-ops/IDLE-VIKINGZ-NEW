@@ -4,6 +4,7 @@ import { levels } from '../data/levels.js';
 import { heroes } from '../data/heroes.js';
 import { rollGearDrops } from '../data/gear.js';
 import { getW, getH } from './canvas.js';
+import { autoPickRandomSkill, getValidSkillChoices } from './skills.js';
 
 function getCombatTopBorderY(H) {
     const hudH = Math.max(52, H * 0.07);
@@ -56,18 +57,37 @@ export function spawnWave(state, levelData) {
 }
 
 function buildSkillChoices(state) {
-    const chosenIds = new Set(state.party.activeSkills.map(s => s.id));
+    const chosenIds = new Set((state.party.activeSkills || []).map(s => s && s.id));
     const pool = [];
     heroes.forEach(heroDef => {
+        if (!Array.isArray(heroDef.skillPool)) return;
         heroDef.skillPool.forEach(skill => {
-            if (!chosenIds.has(skill.id)) pool.push(skill);
+            if (skill && !chosenIds.has(skill.id)) pool.push(skill);
         });
     });
     for (let i = pool.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [pool[i], pool[j]] = [pool[j], pool[i]];
     }
-    return pool.slice(0, 3);
+    return getValidSkillChoices(pool.slice(0, 3));
+}
+
+function triggerSkillChoice(state) {
+    const choices = buildSkillChoices(state);
+
+    if (state.autoPickSkills) {
+        autoPickRandomSkill(state, choices);
+        return;
+    }
+
+    if (choices.length === 0) {
+        state.pendingSkillChoice = false;
+        state.skillChoices = [];
+        return;
+    }
+
+    state.pendingSkillChoice = true;
+    state.skillChoices = choices;
 }
 
 const EXP_PER_LEVEL = 60;
@@ -119,8 +139,7 @@ export function updateMonsters(state, dt) {
                 while (state.party.exp >= EXP_PER_LEVEL) {
                     state.party.level++;
                     state.party.exp -= EXP_PER_LEVEL;
-                    state.pendingSkillChoice = true;
-                    state.skillChoices = buildSkillChoices(state);
+                    triggerSkillChoice(state);
                 }
                 return;
             }
@@ -158,8 +177,7 @@ export function updateMonsters(state, dt) {
             while (state.party.exp >= EXP_PER_LEVEL) {
                 state.party.level++;
                 state.party.exp -= EXP_PER_LEVEL;
-                state.pendingSkillChoice = true;
-                state.skillChoices = buildSkillChoices(state);
+                triggerSkillChoice(state);
             }
         }
     });
@@ -247,6 +265,7 @@ export function loadProgress(state) {
         if (save.permanentUpgrades) state.permanentUpgrades = save.permanentUpgrades;
         if (save.equippedGear) state.equippedGear = save.equippedGear;
         if (save.gearInventory) state.gearInventory = save.gearInventory;
+        state.autoPickSkills = save.autoPickSkills === true;
 
         // Compute offline gold
         if (save.lastSeen) {
