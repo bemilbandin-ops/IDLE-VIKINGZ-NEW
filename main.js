@@ -9,6 +9,7 @@ import { updateProjectiles } from './src/projectiles.js';
 import { levels } from './data/levels.js';
 import { gearPool } from './data/gear.js';
 import { saveGameState } from './src/utils.js';
+import { checkAchievements, getAchievementIncomeMultiplier, getAchievementOfflineMultiplier, grantGold } from './src/achievements.js';
 
 window._gearData = { gearPool };
 
@@ -23,7 +24,7 @@ let tabHiddenAt = 0;
 const IDLE_RATES = [20, 30, 45, 65]; // indexed by highestUnlockedLevel
 function idleGoldPerSecond(state) {
     const rate = IDLE_RATES[Math.min(state.highestUnlockedLevel, IDLE_RATES.length - 1)];
-    return rate / 3600;
+    return (rate * getAchievementIncomeMultiplier(state)) / 3600;
 }
 
 // Load saved progress on startup
@@ -44,9 +45,8 @@ document.addEventListener('visibilitychange', () => {
         const hiddenSec = hiddenMs / 1000;
         if (hiddenSec >= 60) {
             const cappedSec = Math.min(hiddenSec, 12 * 3600);
-            const earned = Math.floor(idleGoldPerSecond(state) * cappedSec);
+            const earned = Math.floor(idleGoldPerSecond(state) * getAchievementOfflineMultiplier(state) * cappedSec);
             if (earned > 0) {
-                state.gold += earned;
                 const mins = Math.floor(hiddenSec / 60);
                 const hrs = Math.floor(mins / 60);
                 const dispTime = hrs > 0 ? `${hrs}h ${mins % 60}m` : `${mins}m`;
@@ -74,7 +74,7 @@ canvas.addEventListener('click', (e) => {
 
     // Offline gold collect popup — intercept any click
     if (state.pendingOfflineGold > 0) {
-        state.gold += state.pendingOfflineGold;
+        grantGold(state, state.pendingOfflineGold);
         state.pendingOfflineGold = 0;
         state.pendingOfflineTime = '';
         saveGameState(state);
@@ -90,6 +90,7 @@ canvas.addEventListener('click', (e) => {
         state.shopOpen = false;
         state.heroUpgradeOpen = false;
         state.gearOpen = false;
+        state.achievementsOpen = false;
     } else if (result && result.action === 'retry') {
         startLevel(state.currentLevel, W, H);
     }
@@ -177,6 +178,7 @@ function drawOfflinePopup(ctx, W, H) {
 }
 
 function update(dt) {
+    checkAchievements(state);
     // Don't update game logic if tab is hidden (RAF already pauses, but just in case)
     if (tabHidden) return;
 
@@ -184,7 +186,7 @@ function update(dt) {
     state.idleGoldTimer = (state.idleGoldTimer || 0) + dt;
     if (state.idleGoldTimer >= 1) {
         state.idleGoldTimer -= 1;
-        state.gold += idleGoldPerSecond(state); // tiny per-second passive drip
+        grantGold(state, idleGoldPerSecond(state)); // tiny per-second passive drip
     }
 
     // Keep the visible gold counter calm/readable; actual gold still changes immediately.
@@ -207,6 +209,7 @@ function update(dt) {
         updateProjectiles(state, combatDt);
         updateFloatingTexts(state, combatDt);
         checkWaveComplete(state, combatDt);
+        checkAchievements(state);
 
         state.monsters.forEach(m => {
             if (hpBefore[m.id] !== undefined && m.hp < hpBefore[m.id] && !m.dead) {
