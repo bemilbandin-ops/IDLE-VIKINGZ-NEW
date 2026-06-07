@@ -40,6 +40,8 @@ export const state = {
     // Skill selection popup
     pendingSkillChoice: false,
     skillChoices: [],
+    autoPickSkills: false,
+    gameSpeed: 1,
     // Shop & hero upgrade screen state
     shopOpen: false,
     heroUpgradeOpen: false,
@@ -70,7 +72,7 @@ export function resetLevelState(state, levelIndex, W, H) {
     state.pendingGearRewards = [];
 
     const heroSize = Math.min(H * 0.12, 80);
-    const heroSpacing = heroSize * 1.2;
+    const heroSpacing = Math.min(Math.max(heroSize * 2.25, W * 0.20), W * 0.29);
     const centerX = W / 2;
 
     state.heroes = heroes.map((hero, i) => ({
