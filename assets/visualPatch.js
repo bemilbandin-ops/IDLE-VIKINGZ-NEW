@@ -13,6 +13,54 @@ overlay.style.background = 'transparent';
 document.body.appendChild(overlay);
 const ctx = overlay.getContext('2d');
 
+const autoButton = document.createElement('button');
+autoButton.id = 'autoSkillSpeedButton';
+autoButton.type = 'button';
+autoButton.textContent = 'AUTO PICK SKILLS + 2x GAME SPEED';
+autoButton.style.position = 'fixed';
+autoButton.style.left = '14px';
+autoButton.style.top = '58px';
+autoButton.style.zIndex = '8';
+autoButton.style.padding = '8px 10px';
+autoButton.style.maxWidth = '185px';
+autoButton.style.font = "700 11px Cinzel, Georgia, serif";
+autoButton.style.lineHeight = '1.15';
+autoButton.style.letterSpacing = '.4px';
+autoButton.style.color = '#fff7d4';
+autoButton.style.background = 'linear-gradient(#4d3210, #1b1208)';
+autoButton.style.border = '1px solid rgba(240,192,64,.85)';
+autoButton.style.borderRadius = '9px';
+autoButton.style.boxShadow = '0 0 12px rgba(212,160,23,.35), inset 0 0 12px rgba(0,0,0,.45)';
+autoButton.style.cursor = 'pointer';
+autoButton.style.userSelect = 'none';
+autoButton.style.pointerEvents = 'auto';
+document.body.appendChild(autoButton);
+
+function syncAutoButton() {
+  const active = !!state.autoPickSkills;
+  autoButton.textContent = active ? 'AUTO PICK SKILLS + 2x GAME SPEED: ON' : 'AUTO PICK SKILLS + 2x GAME SPEED';
+  autoButton.style.background = active ? 'linear-gradient(#8b6010, #3b2508)' : 'linear-gradient(#4d3210, #1b1208)';
+  autoButton.style.borderColor = active ? '#ffe066' : 'rgba(240,192,64,.85)';
+  autoButton.style.display = state.screen === 'combat' ? 'block' : 'none';
+}
+
+autoButton.addEventListener('click', (event) => {
+  event.preventDefault();
+  event.stopPropagation();
+  state.autoPickSkills = !state.autoPickSkills;
+  state.gameSpeed = state.autoPickSkills ? 2 : 1;
+  syncAutoButton();
+});
+
+function autoPickSkillIfNeeded() {
+  if (!state.autoPickSkills || !state.pendingSkillChoice || !state.skillChoices?.length) return;
+  const skill = state.skillChoices[0];
+  if (typeof skill.effect === 'function') skill.effect(state);
+  state.party.activeSkills.push(skill);
+  state.pendingSkillChoice = false;
+  state.skillChoices = [];
+}
+
 const heroCfg = {
   astrid: { key: 'hero_astrid', glow: '#ffb432', ultimate: 'volley', every: 6 },
   hilda:  { key: 'hero_hilda',  glow: '#7df0ff', ultimate: 'blizzard', every: 5 },
@@ -43,7 +91,7 @@ function heroPanelY(H) {
 }
 
 function heroSize(W, H) {
-  return Math.min(Math.max(38, W * 0.045), Math.max(52, H * 0.09));
+  return Math.min(Math.max(42, W * 0.052), Math.max(58, H * 0.105));
 }
 
 function observeProjectiles(now) {
@@ -139,6 +187,8 @@ function drawHeroSprites(now, W, H) {
 
 function frame(now) {
   resize();
+  syncAutoButton();
+  autoPickSkillIfNeeded();
   const W = window.innerWidth, H = window.innerHeight;
   ctx.clearRect(0, 0, W, H);
   if (state.screen === 'combat') {
