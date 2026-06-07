@@ -1,5 +1,5 @@
 import { state } from './src/gameState.js';
-import { ctx, getW, getH, clearScreen, afterDraw, drawMonster, drawProjectiles, spawnHitParticles, triggerShake, drawDebugOverlay } from './src/canvas.js';
+import { ctx, getW, getH, clearScreen, afterDraw, drawProjectiles, spawnHitParticles, triggerShake, drawDebugOverlay } from './src/canvas.js';
 import { drawTitleScreen, drawLevelSelectScreen, drawCombatOverlays, handleClick } from './src/screens.js';
 import { resetLevelState } from './src/gameState.js';
 import { drawHUD, drawHeroPanel, drawBarricade, tickTorches } from './src/ui.js';
@@ -187,14 +187,15 @@ function update(dt) {
         if (state.levelComplete || state.levelFailed) return;
         if (state.pendingSkillChoice) return;
 
+        const combatDt = dt * (state.gameSpeed || 1);
         const hpBefore = {};
         state.monsters.forEach(m => { hpBefore[m.id] = m.hp; });
 
-        updateMonsters(state, dt);
-        heroAttackTick(state, dt);
-        updateProjectiles(state, dt);
-        updateFloatingTexts(state, dt);
-        checkWaveComplete(state, dt);
+        updateMonsters(state, combatDt);
+        heroAttackTick(state, combatDt);
+        updateProjectiles(state, combatDt);
+        updateFloatingTexts(state, combatDt);
+        checkWaveComplete(state, combatDt);
 
         state.monsters.forEach(m => {
             if (hpBefore[m.id] !== undefined && m.hp < hpBefore[m.id] && !m.dead) {
@@ -210,13 +211,13 @@ function update(dt) {
         }
 
         // Auto-save every 30s during combat
-        autoSaveTimer += dt;
+        autoSaveTimer += combatDt;
         if (autoSaveTimer >= 30) {
             autoSaveTimer = 0;
             saveGameState(state);
         }
 
-        tickTorches(dt);
+        tickTorches(combatDt);
     }
 }
 
@@ -233,9 +234,6 @@ function draw(now) {
     } else if (state.screen === 'combat') {
         drawHUD(ctx, W, H, state);
         drawBarricade(ctx, W, H, state);
-        state.monsters.forEach(monster => {
-            if (!monster.dead) drawMonster(ctx, monster);
-        });
         drawProjectiles(ctx, state);
         drawHeroPanel(ctx, W, H, state);
         drawCombatOverlays(ctx, W, H, state);
