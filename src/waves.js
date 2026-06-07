@@ -5,6 +5,11 @@ import { heroes } from '../data/heroes.js';
 import { rollGearDrops } from '../data/gear.js';
 import { getW, getH } from './canvas.js';
 
+function getCombatTopBorderY(H) {
+    const hudH = Math.max(52, H * 0.07);
+    return hudH + 10;
+}
+
 export function spawnWave(state, levelData) {
     const levelIndex = state.currentLevel;
     const W = getW();
@@ -13,15 +18,17 @@ export function spawnWave(state, levelData) {
     const isBossWave = (state.currentWave + 1) % 10 === 0;
     const count = isBossWave ? 1 : 2 + state.currentWave;
 
-    const spawnWidth = W * 0.7;
-    const startX = (W - spawnWidth) / 2;
+    const edgePad = Math.max(34, W * 0.045);
+    const spawnWidth = W - edgePad * 2;
+    const startX = edgePad;
+    const topBorderY = getCombatTopBorderY(H);
 
     for (let i = 0; i < count; i++) {
         const defId = isBossWave ? 'boss' : monsterPool[Math.floor(Math.random() * monsterPool.length)];
         const monsterDef = monsters.find(m => m.id === defId);
 
-        const x = startX + (spawnWidth / (count + 1)) * (i + 1) + (Math.random() - 0.5) * 20;
-        const y = -80 - i * 28;
+        const x = startX + (spawnWidth / (count + 1)) * (i + 1) + (Math.random() - 0.5) * 18;
+        const y = topBorderY - monsterDef.size.h * 0.95 - i * 22;
 
         state.monsters.push({
             id: uuid(),
