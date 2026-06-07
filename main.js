@@ -5,10 +5,11 @@ import { resetLevelState } from './src/gameState.js';
 import { drawHUD, drawHeroPanel, drawBarricade, tickTorches } from './src/ui.js';
 import { spawnWave, updateMonsters, checkWaveComplete, loadProgress, onLevelFailed, initWaveTracking } from './src/waves.js';
 import { heroAttackTick, updateFloatingTexts } from './src/combat.js';
-import { updateProjectiles } from './src/projectiles.js';
+import { updateProjectiles, updateCombatEffects } from './src/projectiles.js';
 import { levels } from './data/levels.js';
 import { gearPool } from './data/gear.js';
 import { saveGameState } from './src/utils.js';
+import { autoPickRandomSkill } from './src/skills.js';
 import { checkAchievements, getAchievementIncomeMultiplier, getAchievementOfflineMultiplier, grantGold } from './src/achievements.js';
 
 window._gearData = { gearPool };
@@ -199,13 +200,7 @@ function update(dt) {
 
     if (state.screen === 'combat') {
         if (state.levelComplete || state.levelFailed) return;
-        if (state.pendingSkillChoice && state.autoPickSkills && state.skillChoices?.length) {
-            const skill = state.skillChoices[0];
-            if (typeof skill.effect === 'function') skill.effect(state);
-            state.party.activeSkills.push(skill);
-            state.pendingSkillChoice = false;
-            state.skillChoices = [];
-        }
+        if (state.pendingSkillChoice && state.autoPickSkills) autoPickRandomSkill(state);
         if (state.pendingSkillChoice) return;
 
         state.gameSpeed = state.autoPickSkills ? 2 : 1;
@@ -216,6 +211,7 @@ function update(dt) {
         updateMonsters(state, combatDt);
         heroAttackTick(state, combatDt);
         updateProjectiles(state, combatDt);
+        updateCombatEffects(state, combatDt);
         updateFloatingTexts(state, combatDt);
         checkWaveComplete(state, combatDt);
         checkAchievements(state);

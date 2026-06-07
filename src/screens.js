@@ -475,11 +475,6 @@ function drawHeroUpgradeOverlay(ctx, W, H, state) {
         ctx.font = `italic 12px 'Crimson Text', serif`;
         ctx.fillStyle = '#888';
         ctx.fillText(hero.title, cX + colW / 2, cY + 10 + portH + 32);
-        ctx.textAlign = 'right';
-        ctx.font = `bold 10px 'Cinzel', serif`;
-        ctx.fillStyle = '#fff3b0';
-        ctx.fillText(`Hero Lv ${heroLevel}`, cX + colW - 16, cY + 24);
-        ctx.textAlign = 'center';
 
         const tier = getAscensionTier(state, hero.id);
         const nextTier = getNextAscensionTier(state, hero.id);

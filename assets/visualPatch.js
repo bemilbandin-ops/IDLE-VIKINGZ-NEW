@@ -1,5 +1,6 @@
 import { state } from '../src/gameState.js';
 import { drawSvgSprite, warmupSprites } from './sprites.js';
+import { autoPickRandomSkill } from '../src/skills.js';
 import { saveGameState } from '../src/utils.js';
 
 warmupSprites();
@@ -38,11 +39,9 @@ autoButton.style.pointerEvents = 'auto';
 document.body.appendChild(autoButton);
 
 function syncAutoButton() {
-  const active = !!state.autoPickSkills;
-  autoButton.textContent = active ? 'AUTO PICK SKILLS + 2x GAME SPEED: ON' : 'AUTO PICK SKILLS + 2x GAME SPEED';
-  autoButton.style.background = active ? 'linear-gradient(#8b6010, #3b2508)' : 'linear-gradient(#4d3210, #1b1208)';
-  autoButton.style.borderColor = active ? '#ffe066' : 'rgba(240,192,64,.85)';
-  autoButton.style.display = state.screen === 'combat' ? 'block' : 'none';
+  // Main menu owns this setting. Hide the older combat-only button so players do
+  // not need to press a second Auto button after starting a level.
+  autoButton.style.display = 'none';
 }
 
 autoButton.addEventListener('click', (event) => {
@@ -56,11 +55,7 @@ autoButton.addEventListener('click', (event) => {
 
 function autoPickSkillIfNeeded() {
   if (!state.autoPickSkills || !state.pendingSkillChoice || !state.skillChoices?.length) return;
-  const skill = state.skillChoices[0];
-  if (typeof skill.effect === 'function') skill.effect(state);
-  state.party.activeSkills.push(skill);
-  state.pendingSkillChoice = false;
-  state.skillChoices = [];
+  autoPickRandomSkill(state);
 }
 
 const heroCfg = {
