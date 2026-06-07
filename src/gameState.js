@@ -49,6 +49,17 @@ export const state = {
     shopOpen: false,
     heroUpgradeOpen: false,
     gearOpen: false,
+    achievementsOpen: false,
+    achievementStats: {
+        monstersDefeated: 0,
+        totalGoldEarned: 0,
+        level1Cleared: false,
+        firstGearEquipped: false,
+        partyLevel5Reached: false,
+        gearPiecesCollected: 0
+    },
+    achievements: { claimed: {}, ready: {} },
+    achievementRewards: { incomePercent: 0, offlineGoldPercent: 0 },
     // Shop items available on title screen
     shopItems: [
         { id: 'atk_boost', name: 'Sharpened Blades', desc: '+10% ATK for all heroes', cost: 100 },

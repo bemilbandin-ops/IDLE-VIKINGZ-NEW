@@ -1,4 +1,5 @@
 import { uuid, saveGameState } from './utils.js';
+import { checkAchievements, getAchievementIncomeMultiplier, getAchievementOfflineMultiplier, grantGold, recordMonsterDefeated } from './achievements.js';
 import { monsters } from '../data/monsters.js';
 import { levels } from '../data/levels.js';
 import { heroes } from '../data/heroes.js';
@@ -136,9 +137,10 @@ export function updateMonsters(state, dt) {
             // Check if hero projectiles killed this monster while it was at the barricade
             if (monster.hp <= 0) {
                 monster.dead = true;
-                const incomeMult = 1 + (state.permanentUpgrades.astrid.income + state.permanentUpgrades.hilda.income + state.permanentUpgrades.bjorn.income) * 0.05;
+                recordMonsterDefeated(state);
+                const incomeMult = (1 + (state.permanentUpgrades.astrid.income + state.permanentUpgrades.hilda.income + state.permanentUpgrades.bjorn.income) * 0.05) * getAchievementIncomeMultiplier(state);
                 const goldReward = Math.floor(monster.goldReward * incomeMult);
-                state.gold += goldReward;
+                grantGold(state, goldReward);
                 state.sessionGold += goldReward;
                 const scaledExp = getMonsterExpReward(monster);
                 state.party.exp += scaledExp;
@@ -172,9 +174,10 @@ export function updateMonsters(state, dt) {
 
         if (monster.hp <= 0) {
             monster.dead = true;
-            const incomeMult = 1 + (state.permanentUpgrades.astrid.income + state.permanentUpgrades.hilda.income + state.permanentUpgrades.bjorn.income) * 0.05;
+            recordMonsterDefeated(state);
+            const incomeMult = (1 + (state.permanentUpgrades.astrid.income + state.permanentUpgrades.hilda.income + state.permanentUpgrades.bjorn.income) * 0.05) * getAchievementIncomeMultiplier(state);
             const goldReward = Math.floor(monster.goldReward * incomeMult);
-            state.gold += goldReward;
+            grantGold(state, goldReward);
             state.sessionGold += goldReward;
 
             const scaledExp = getMonsterExpReward(monster);
@@ -241,9 +244,11 @@ function triggerVictory(state) {
         state.levelCompletedShardHero = null;
     }
     state.levelComplete = true;
+    checkAchievements(state);
     if (state.currentLevel >= state.highestUnlockedLevel) {
         state.highestUnlockedLevel = state.currentLevel + 1;
     }
+    checkAchievements(state);
     saveGameState(state);
 }
 
@@ -253,6 +258,7 @@ export function onLevelFailed(state) {
         if (!state.gearInventory.includes(g.id)) state.gearInventory.push(g.id);
     });
     state.pendingGearRewards = gearDrops;
+    checkAchievements(state);
     saveGameState(state);
 }
 
@@ -271,6 +277,10 @@ export function loadProgress(state) {
         if (save.permanentUpgrades) state.permanentUpgrades = save.permanentUpgrades;
         if (save.equippedGear) state.equippedGear = save.equippedGear;
         if (save.gearInventory) state.gearInventory = save.gearInventory;
+        if (save.achievementStats) state.achievementStats = save.achievementStats;
+        if (save.achievements) state.achievements = save.achievements;
+        if (save.achievementRewards) state.achievementRewards = save.achievementRewards;
+        checkAchievements(state);
         state.autoPickSkills = save.autoPickSkills === true;
 
         // Compute offline gold
@@ -280,7 +290,7 @@ export function loadProgress(state) {
                 const cappedSeconds = Math.min(elapsed, 12 * 3600);
                 const rates = [20, 30, 45, 65];
                 const rate = rates[Math.min(save.highestUnlockedLevel || 0, rates.length - 1)];
-                const offlineGold = Math.floor(rate * cappedSeconds / 3600);
+                const offlineGold = Math.floor(rate * getAchievementIncomeMultiplier(state) * getAchievementOfflineMultiplier(state) * cappedSeconds / 3600);
                 if (offlineGold > 0) {
                     const offlineHours = Math.floor(elapsed / 3600);
                     const offlineMins = Math.floor((elapsed % 3600) / 60);

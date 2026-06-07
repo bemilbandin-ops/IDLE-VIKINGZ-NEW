@@ -2,6 +2,7 @@
 
 import { roundRect, hexToRgb, saveGameState, getShopPanelDims, getHeroUpgradePanelDims, getDisplayedGold } from './utils.js';
 import { applySkillChoice } from './skills.js';
+import { checkAchievements, claimAchievement, getAchievementList } from './achievements.js';
 
 const T = () => Date.now();
 
@@ -86,6 +87,11 @@ export function drawTitleScreen(ctx, W, H, state) {
     const toggle = getAutoPickToggleRect(W, H);
     drawRuneButton(ctx, toggle.x, toggle.y, toggle.w, toggle.h, `Auto Pick Skills: ${state.autoPickSkills ? 'ON' : 'OFF'}`, state.mouse, state.autoPickSkills ? '#1f6b38' : '#5a3310', state.autoPickSkills ? '#58d878' : '#d4a017', false, false);
 
+    const achievementButton = getAchievementsButtonRect(W, H);
+    const achievements = getAchievementList(state);
+    const readyCount = achievements.filter(a => a.ready && !a.claimed).length;
+    drawRuneButton(ctx, achievementButton.x, achievementButton.y, achievementButton.w, achievementButton.h, `🏆 ACHIEVEMENTS${readyCount > 0 ? ` (${readyCount})` : ''}`, state.mouse, '#5a4210', '#f0c040', readyCount > 0, false);
+
     // Gear count badge
     const gearCount = (state.gearInventory || []).length;
     if (gearCount > 0) {
@@ -105,6 +111,7 @@ export function drawTitleScreen(ctx, W, H, state) {
     if (state.shopOpen) drawShopOverlay(ctx, W, H, state);
     if (state.heroUpgradeOpen) drawHeroUpgradeOverlay(ctx, W, H, state);
     if (state.gearOpen) drawGearOverlay(ctx, W, H, state);
+    if (state.achievementsOpen) drawAchievementsOverlay(ctx, W, H, state);
 }
 
 // ── Level Select ──────────────────────────────────────────────────────────────
@@ -615,7 +622,98 @@ function handleGearOverlayClick(state, mouse, W, H) {
         if (inRect(mouse, ix + (itemW - 4) / 2 - bW3/2, iy + 48, bW3, bH3)) {
             // Equip: set in correct slot
             state.equippedGear[gear.slot] = gearId;
+            checkAchievements(state);
             saveGameState(state);
+        }
+    });
+
+    return { action: 'none' };
+}
+
+
+// ── Achievements Overlay ─────────────────────────────────────────────────────
+function drawAchievementsOverlay(ctx, W, H, state) {
+    drawModalBg(ctx, W, H, '#f0c040');
+    const pW = Math.min(W * 0.84, 760), pH = H * 0.82;
+    const pX = W / 2 - pW / 2, pY = H / 2 - pH / 2;
+    drawPanel(ctx, pX, pY, pW, pH, '#f0c040');
+
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font = `bold ${Math.round(pH * 0.06)}px 'Cinzel', serif`;
+    ctx.fillStyle = '#f0c040'; ctx.shadowColor = '#f0c040'; ctx.shadowBlur = 12;
+    ctx.fillText('ACHIEVEMENTS', W / 2, pY + pH * 0.07);
+    ctx.shadowBlur = 0;
+
+    ctx.font = `13px 'Crimson Text', serif`;
+    ctx.fillStyle = '#c8b98c';
+    ctx.fillText('Complete small goals, then claim safe rewards for your Viking hall.', W / 2, pY + pH * 0.125);
+
+    const rows = getAchievementList(state);
+    const rowX = pX + 18;
+    const rowW = pW - 36;
+    const rowH = Math.min(58, (pH - 150) / rows.length);
+    const startY = pY + pH * 0.17;
+
+    rows.forEach((achievement, i) => {
+        const y = startY + i * (rowH + 8);
+        const claimed = achievement.claimed;
+        const ready = achievement.ready && !claimed;
+        ctx.fillStyle = claimed ? 'rgba(40,70,48,0.48)' : ready ? 'rgba(90,70,18,0.62)' : 'rgba(20,24,28,0.72)';
+        ctx.strokeStyle = claimed ? '#58d878' : ready ? '#f0c040' : 'rgba(212,160,23,0.35)';
+        ctx.lineWidth = ready ? 2 : 1;
+        roundRect(ctx, rowX, y, rowW, rowH, 8); ctx.fill(); ctx.stroke();
+
+        ctx.textAlign = 'left';
+        ctx.font = `bold 13px 'Cinzel', serif`;
+        ctx.fillStyle = claimed ? '#9ff0ad' : '#fff0b0';
+        ctx.fillText(`${claimed ? '✓' : ready ? '!' : '•'} ${achievement.name}`, rowX + 12, y + rowH * 0.30);
+
+        ctx.font = `12px 'Crimson Text', serif`;
+        ctx.fillStyle = '#c8b98c';
+        ctx.fillText(`${achievement.requirement} (${achievement.progress})`, rowX + 12, y + rowH * 0.62);
+
+        ctx.textAlign = 'center';
+        ctx.font = `bold 11px 'Cinzel', serif`;
+        ctx.fillStyle = '#f0c040';
+        ctx.fillText(achievement.reward, rowX + rowW * 0.62, y + rowH * 0.45);
+
+        const bW = 94, bH = 26;
+        const bX = rowX + rowW - bW - 12;
+        const bY = y + rowH / 2 - bH / 2;
+        if (claimed) {
+            drawRuneButton(ctx, bX, bY, bW, bH, 'Claimed', state.mouse, '#1f6b38', '#58d878', false, true);
+        } else if (ready) {
+            drawRuneButton(ctx, bX, bY, bW, bH, 'Claim', state.mouse, '#8b6010', '#f0c040', true, false);
+        } else {
+            drawRuneButton(ctx, bX, bY, bW, bH, 'Locked', state.mouse, '#202832', '#555a60', false, true);
+        }
+    });
+
+    drawRuneButton(ctx, W/2 - 70, pY + pH - 50, 140, 40, '✕ Close', state.mouse, '#1a2028', '#f0c040', false, true);
+}
+
+function handleAchievementsOverlayClick(state, mouse, W, H) {
+    const pW = Math.min(W * 0.84, 760), pH = H * 0.82;
+    const pX = W / 2 - pW / 2, pY = H / 2 - pH / 2;
+
+    if (inRect(mouse, W/2 - 70, pY + pH - 50, 140, 40)) {
+        state.achievementsOpen = false;
+        return { action: 'none' };
+    }
+
+    const rows = getAchievementList(state);
+    const rowX = pX + 18;
+    const rowW = pW - 36;
+    const rowH = Math.min(58, (pH - 150) / rows.length);
+    const startY = pY + pH * 0.17;
+
+    rows.forEach((achievement, i) => {
+        const y = startY + i * (rowH + 8);
+        const bW = 94, bH = 26;
+        const bX = rowX + rowW - bW - 12;
+        const bY = y + rowH / 2 - bH / 2;
+        if (achievement.ready && !achievement.claimed && inRect(mouse, bX, bY, bW, bH)) {
+            claimAchievement(state, achievement.id);
         }
     });
 
@@ -1006,6 +1104,10 @@ export function handleClick(state, levelIndex, clickX, clickY, W, H) {
     const mouse = { x: clickX, y: clickY };
 
     if (state.screen === 'title') {
+        if (state.achievementsOpen) {
+            return handleAchievementsOverlayClick(state, mouse, W, H);
+        }
+
         if (state.shopOpen) {
             const { pW, pH, pX, pY } = getShopPanelDims(W, H);
 
@@ -1063,6 +1165,15 @@ export function handleClick(state, levelIndex, clickX, clickY, W, H) {
         }
 
         const autoToggle = getAutoPickToggleRect(W, H);
+        const achievementButton = getAchievementsButtonRect(W, H);
+        if (inRect(mouse, achievementButton.x, achievementButton.y, achievementButton.w, achievementButton.h)) {
+            state.achievementsOpen = true;
+            state.shopOpen = false;
+            state.heroUpgradeOpen = false;
+            state.gearOpen = false;
+            return { action:'none' };
+        }
+
         if (inRect(mouse, autoToggle.x, autoToggle.y, autoToggle.w, autoToggle.h)) {
             state.autoPickSkills = !state.autoPickSkills;
             saveGameState(state);
@@ -1138,6 +1249,11 @@ export function handleClick(state, levelIndex, clickX, clickY, W, H) {
 // ── Utility ───────────────────────────────────────────────────────────────────
 function getAutoPickToggleRect(W, H) {
     return { x: 16, y: Math.max(70, H * 0.12), w: 220, h: 36 };
+}
+
+function getAchievementsButtonRect(W, H) {
+    const toggle = getAutoPickToggleRect(W, H);
+    return { x: toggle.x, y: toggle.y + toggle.h + 10, w: 220, h: 36 };
 }
 
 function inRect(m, x, y, w, h) { return m.x>=x && m.x<=x+w && m.y>=y && m.y<=y+h; }

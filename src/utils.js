@@ -49,6 +49,9 @@ export function saveGameState(state) {
             permanentUpgrades: state.permanentUpgrades,
             equippedGear: state.equippedGear || { weapon: null, armor: null, relic: null },
             gearInventory: state.gearInventory || [],
+            achievementStats: state.achievementStats || {},
+            achievements: state.achievements || { claimed: {}, ready: {} },
+            achievementRewards: state.achievementRewards || { incomePercent: 0, offlineGoldPercent: 0 },
             autoPickSkills: state.autoPickSkills === true,
             lastSeen: Date.now()
         };
