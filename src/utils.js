@@ -52,6 +52,11 @@ export function saveGameState(state) {
             achievementStats: state.achievementStats || {},
             achievements: state.achievements || { claimed: {}, ready: {} },
             achievementRewards: state.achievementRewards || { incomePercent: 0, offlineGoldPercent: 0 },
+<<<<<<< HEAD
+=======
+            heroAscensions: state.heroAscensions || {},
+            firstClearShardRewards: state.firstClearShardRewards || {},
+>>>>>>> d12e53c (hp bars, more levels etc)
             autoPickSkills: state.autoPickSkills === true,
             lastSeen: Date.now()
         };
@@ -62,9 +67,9 @@ export function saveGameState(state) {
 }
 
 // Gold per hour based on completed levels
-// 0 levels = 20/hr, 1 level = 30/hr, 2 levels = 45/hr, 3 levels = 65/hr
+// Scales by completed levels. Index 0 means no levels cleared yet.
 export function idleGoldPerHour(highestUnlockedLevel) {
-    const rates = [20, 30, 45, 65];
+    const rates = [20, 30, 45, 65, 90, 120, 155, 195, 240, 290, 345];
     return rates[Math.min(highestUnlockedLevel, rates.length - 1)];
 }
 

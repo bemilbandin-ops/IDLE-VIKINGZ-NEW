@@ -5,10 +5,14 @@ import { resetLevelState } from './src/gameState.js';
 import { drawHUD, drawHeroPanel, drawBarricade, tickTorches } from './src/ui.js';
 import { spawnWave, updateMonsters, checkWaveComplete, loadProgress, onLevelFailed, initWaveTracking } from './src/waves.js';
 import { heroAttackTick, updateFloatingTexts } from './src/combat.js';
-import { updateProjectiles } from './src/projectiles.js';
+import { updateProjectiles, updateCombatEffects } from './src/projectiles.js';
 import { levels } from './data/levels.js';
 import { gearPool } from './data/gear.js';
 import { saveGameState } from './src/utils.js';
+<<<<<<< HEAD
+=======
+import { autoPickRandomSkill } from './src/skills.js';
+>>>>>>> d12e53c (hp bars, more levels etc)
 import { checkAchievements, getAchievementIncomeMultiplier, getAchievementOfflineMultiplier, grantGold } from './src/achievements.js';
 
 window._gearData = { gearPool };
@@ -21,7 +25,7 @@ let tabHidden = false;
 let tabHiddenAt = 0;
 
 // Gold/hr rates matching loadProgress calculation
-const IDLE_RATES = [20, 30, 45, 65]; // indexed by highestUnlockedLevel
+const IDLE_RATES = [20, 30, 45, 65, 90, 120, 155, 195, 240, 290, 345]; // indexed by highestUnlockedLevel
 function idleGoldPerSecond(state) {
     const rate = IDLE_RATES[Math.min(state.highestUnlockedLevel, IDLE_RATES.length - 1)];
     return (rate * getAchievementIncomeMultiplier(state)) / 3600;
@@ -29,6 +33,10 @@ function idleGoldPerSecond(state) {
 
 // Load saved progress on startup
 loadProgress(state);
+<<<<<<< HEAD
+=======
+state.gameSpeed = state.autoPickSkills ? 2 : 1;
+>>>>>>> d12e53c (hp bars, more levels etc)
 state.displayGold = state.gold;
 
 // ── Pause/resume when tab is hidden ─────────────────────────────────────────
@@ -198,15 +206,25 @@ function update(dt) {
 
     if (state.screen === 'combat') {
         if (state.levelComplete || state.levelFailed) return;
+        if (state.pendingSkillChoice && state.autoPickSkills) autoPickRandomSkill(state);
         if (state.pendingSkillChoice) return;
 
+<<<<<<< HEAD
         const combatDt = dt * (state.gameSpeed || 1);
+=======
+        state.gameSpeed = state.autoPickSkills ? 2 : 1;
+        const combatDt = dt * state.gameSpeed;
+>>>>>>> d12e53c (hp bars, more levels etc)
         const hpBefore = {};
         state.monsters.forEach(m => { hpBefore[m.id] = m.hp; });
 
         updateMonsters(state, combatDt);
         heroAttackTick(state, combatDt);
         updateProjectiles(state, combatDt);
+<<<<<<< HEAD
+=======
+        updateCombatEffects(state, combatDt);
+>>>>>>> d12e53c (hp bars, more levels etc)
         updateFloatingTexts(state, combatDt);
         checkWaveComplete(state, combatDt);
         checkAchievements(state);
@@ -237,9 +255,21 @@ function update(dt) {
 
 let fps = 0;
 
+
+function drawCurrentLevelTint(ctx, W, H) {
+    if (state.screen !== 'combat') return;
+    const tint = levels[state.currentLevel]?.backgroundTint;
+    if (!tint) return;
+    ctx.save();
+    ctx.fillStyle = tint;
+    ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+}
+
 function draw(now) {
     const W = getW(), H = getH();
     clearScreen(now);
+    drawCurrentLevelTint(ctx, W, H);
 
     if (state.screen === 'title') {
         drawTitleScreen(ctx, W, H, state);

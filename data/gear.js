@@ -71,3 +71,18 @@ export function rollGearDrops(win) {
     }
     return drops;
 }
+
+// Single weighted drop used for boss reward bonuses. Keeps boss loot modest while
+// reusing the existing gear pool and rarity structure.
+export function rollBossGearDrop() {
+    if (Math.random() >= 0.35) return null;
+
+    const r = Math.random();
+    let rarity = 'common';
+    if (r < 0.08) rarity = 'epic';
+    else if (r < 0.40) rarity = 'rare';
+
+    const candidates = gearPool.filter(g => g.rarity === rarity);
+    return candidates[Math.floor(Math.random() * candidates.length)] || null;
+}
+

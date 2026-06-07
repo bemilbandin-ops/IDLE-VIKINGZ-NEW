@@ -1,5 +1,7 @@
 import { state } from '../src/gameState.js';
 import { drawSvgSprite, warmupSprites } from './sprites.js';
+import { autoPickRandomSkill } from '../src/skills.js';
+import { saveGameState } from '../src/utils.js';
 
 warmupSprites();
 
@@ -8,7 +10,7 @@ overlay.id = 'svgVisualOverlay';
 overlay.style.position = 'fixed';
 overlay.style.inset = '0';
 overlay.style.pointerEvents = 'none';
-overlay.style.zIndex = '4';
+overlay.style.zIndex = '1';
 overlay.style.background = 'transparent';
 document.body.appendChild(overlay);
 const ctx = overlay.getContext('2d');
@@ -37,11 +39,17 @@ autoButton.style.pointerEvents = 'auto';
 document.body.appendChild(autoButton);
 
 function syncAutoButton() {
+<<<<<<< HEAD
   const active = !!state.autoPickSkills;
   autoButton.textContent = active ? 'AUTO PICK SKILLS + 2x GAME SPEED: ON' : 'AUTO PICK SKILLS + 2x GAME SPEED';
   autoButton.style.background = active ? 'linear-gradient(#8b6010, #3b2508)' : 'linear-gradient(#4d3210, #1b1208)';
   autoButton.style.borderColor = active ? '#ffe066' : 'rgba(240,192,64,.85)';
   autoButton.style.display = state.screen === 'combat' ? 'block' : 'none';
+=======
+  // Main menu owns this setting. Hide the older combat-only button so players do
+  // not need to press a second Auto button after starting a level.
+  autoButton.style.display = 'none';
+>>>>>>> d12e53c (hp bars, more levels etc)
 }
 
 autoButton.addEventListener('click', (event) => {
@@ -49,16 +57,24 @@ autoButton.addEventListener('click', (event) => {
   event.stopPropagation();
   state.autoPickSkills = !state.autoPickSkills;
   state.gameSpeed = state.autoPickSkills ? 2 : 1;
+<<<<<<< HEAD
+=======
+  saveGameState(state);
+>>>>>>> d12e53c (hp bars, more levels etc)
   syncAutoButton();
 });
 
 function autoPickSkillIfNeeded() {
   if (!state.autoPickSkills || !state.pendingSkillChoice || !state.skillChoices?.length) return;
+<<<<<<< HEAD
   const skill = state.skillChoices[0];
   if (typeof skill.effect === 'function') skill.effect(state);
   state.party.activeSkills.push(skill);
   state.pendingSkillChoice = false;
   state.skillChoices = [];
+=======
+  autoPickRandomSkill(state);
+>>>>>>> d12e53c (hp bars, more levels etc)
 }
 
 const heroCfg = {
@@ -189,16 +205,124 @@ function progress(anim, now) {
   return p < 0 || p > 1 ? null : p;
 }
 
+function getMonsterSpriteScale(monster) {
+  return monster.defId === 'boss' ? 1.95 : monster.defId === 'berserker' ? 1.78 : 1.72;
+}
+
+function getMonsterBob(monster, now) {
+  const frozen = monster.statusEffects?.some(e => e.type === 'frozen');
+  return frozen ? 0 : Math.sin(now * .004 + monster.x) * 2;
+}
+
 function drawMonsterSprites(now) {
   for (const m of state.monsters || []) {
     if (!m || m.dead) continue;
     const key = monsterCfg[m.defId] || 'monster_grunt';
-    const scale = m.defId === 'boss' ? 1.95 : m.defId === 'berserker' ? 1.78 : 1.72;
+    const scale = getMonsterSpriteScale(m);
     const chilled = m.statusEffects?.some(e => e.type === 'chilled');
     const frozen = m.statusEffects?.some(e => e.type === 'frozen');
     const glow = frozen ? '#8be7ff' : chilled ? '#7ec8e3' : (m.defId === 'shaman' ? '#d040ff' : m.defId === 'archer' ? '#00e5ff' : m.defId === 'berserker' ? '#ff1744' : m.defId === 'boss' ? '#ff7a18' : '#ff5522');
-    drawSvgSprite(ctx, key, m.x, m.y, m.w * scale, m.h * scale, { bob: frozen ? 0 : Math.sin(now * .004 + m.x) * 2, rotation: frozen ? 0 : Math.sin(now * .002 + m.x) * .025, shadowColor: glow, shadowBlur: frozen ? 18 : 13, alpha: frozen ? .88 : 1, fallbackColor: glow });
+    drawSvgSprite(ctx, key, m.x, m.y, m.w * scale, m.h * scale, { bob: getMonsterBob(m, now), rotation: frozen ? 0 : Math.sin(now * .002 + m.x) * .025, shadowColor: glow, shadowBlur: frozen ? 18 : 13, alpha: frozen ? .88 : 1, fallbackColor: glow });
   }
+}
+
+function drawRoundedRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function drawMonsterHpBar(monster, now) {
+  if (!monster.maxHp || monster.maxHp <= 0) return;
+  const isBoss = monster.defId === 'boss';
+  const scale = getMonsterSpriteScale(monster);
+  const hpPct = Math.max(0, Math.min(1, monster.hp / monster.maxHp));
+  const spriteW = monster.w * scale;
+  const spriteH = monster.h * scale;
+  const barW = isBoss ? Math.max(86, spriteW * .86) : Math.max(44, spriteW * .72);
+  const barH = isBoss ? 9 : 6;
+  const x = monster.x - barW / 2;
+  const y = monster.y + getMonsterBob(monster, now) - spriteH / 2 - (isBoss ? 17 : 12);
+  const radius = barH / 2;
+  const fill = hpPct > .55 ? '#35d46a' : hpPct > .25 ? '#ffb02e' : '#f04a3a';
+
+  ctx.save();
+  ctx.globalAlpha = .96;
+  ctx.fillStyle = 'rgba(8,6,4,.88)';
+  drawRoundedRect(x - 1, y - 1, barW + 2, barH + 2, radius + 1);
+  ctx.fill();
+  ctx.strokeStyle = isBoss ? 'rgba(255,190,64,.95)' : 'rgba(0,0,0,.85)';
+  ctx.lineWidth = isBoss ? 1.4 : 1;
+  ctx.stroke();
+
+  ctx.fillStyle = '#140905';
+  drawRoundedRect(x, y, barW, barH, radius);
+  ctx.fill();
+
+  if (hpPct > 0) {
+    const fillW = Math.max(radius * 2, barW * hpPct);
+    const grad = ctx.createLinearGradient(x, y, x, y + barH);
+    grad.addColorStop(0, '#fff2a8');
+    grad.addColorStop(.18, fill);
+    grad.addColorStop(1, fill);
+    ctx.fillStyle = grad;
+    ctx.shadowColor = fill;
+    ctx.shadowBlur = isBoss ? 9 : 5;
+    drawRoundedRect(x, y, Math.min(barW, fillW), barH, radius);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+
+  if (isBoss) {
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.font = 'bold 9px Cinzel, Georgia, serif';
+    ctx.fillStyle = '#ffd76a';
+    ctx.shadowColor = '#000';
+    ctx.shadowBlur = 3;
+    ctx.fillText('BOSS', monster.x, y - 3);
+  }
+  ctx.restore();
+}
+
+function drawMonsterHpBars(now) {
+  for (const m of state.monsters || []) {
+    if (!m || m.dead) continue;
+    drawMonsterHpBar(m, now);
+  }
+}
+
+function drawFloatingTexts() {
+  const texts = state.floatingTexts || [];
+  if (!texts.length) return;
+
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.lineWidth = 3;
+  ctx.shadowColor = '#000';
+
+  for (const entry of texts) {
+    if (!entry || entry.alpha <= 0) continue;
+    const fontSize = entry.fontSize || 15;
+    ctx.font = `bold ${fontSize}px Cinzel, Georgia, serif`;
+    ctx.shadowBlur = entry.shadowBlur ?? 5;
+    ctx.globalAlpha = Math.max(0, Math.min(1, entry.alpha));
+    ctx.strokeStyle = 'rgba(0,0,0,.85)';
+    ctx.fillStyle = entry.color || '#fff8e0';
+    ctx.strokeText(entry.text, entry.x, entry.y);
+    ctx.fillText(entry.text, entry.x, entry.y);
+  }
+
+  ctx.restore();
 }
 
 function drawAttackFx(hero, cx, cy, size, p) {
@@ -219,6 +343,38 @@ function drawAttackFx(hero, cx, cy, size, p) {
     ctx.beginPath(); ctx.arc(cx, cy - size * .05, size * (.42 + strike * .25), -Math.PI * .85, Math.PI * (.55 + p * .6)); ctx.stroke();
   }
   ctx.restore();
+}
+
+
+function drawCombatEffects(now, W, H) {
+  for (const e of state.combatEffects || []) {
+    const p = Math.max(0, Math.min(1, (e.age || 0) / (e.duration || 1)));
+    const fade = Math.sin(p * Math.PI);
+    ctx.save();
+    ctx.globalAlpha *= fade;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    if (e.type === 'volley') {
+      ctx.strokeStyle = 'rgba(255,190,45,.9)'; ctx.lineWidth = 2.5; ctx.shadowColor = '#ffb432'; ctx.shadowBlur = 22;
+      for (let i = -3; i <= 3; i++) { ctx.beginPath(); ctx.moveTo((e.x || W/2) + i * 28, Math.max(40, (e.y || H*.35) - 120)); ctx.lineTo((e.x || W/2) + i * 8, e.y || H*.35); ctx.stroke(); }
+    } else if (e.type === 'blizzard' || e.type === 'frost_burst') {
+      const r0 = e.radius || 70; ctx.strokeStyle = 'rgba(156,238,255,.92)'; ctx.lineWidth = 2; ctx.shadowColor = '#7df0ff'; ctx.shadowBlur = 26;
+      for (let i = 0; i < 5; i++) { const r = r0 * (.35 + p) + i * 10; ctx.beginPath(); ctx.arc(e.x || W/2, e.y || H*.35, r, -p * Math.PI * 5 + i, -p * Math.PI * 5 + i + Math.PI * 1.1); ctx.stroke(); }
+    } else if (e.type === 'lightning_chain') {
+      ctx.strokeStyle = 'rgba(255,238,77,.96)'; ctx.lineWidth = 3; ctx.shadowColor = '#ffe84a'; ctx.shadowBlur = 24;
+      ctx.beginPath(); ctx.moveTo(e.x1, e.y1); ctx.lineTo((e.x1 + e.x2) / 2 + Math.sin(now * .03) * 18, (e.y1 + e.y2) / 2); ctx.lineTo(e.x2, e.y2); ctx.stroke();
+    } else if (e.type === 'lightning_strike') {
+      ctx.strokeStyle = 'rgba(255,238,77,.96)'; ctx.lineWidth = 3.5; ctx.shadowColor = '#ffe84a'; ctx.shadowBlur = 28;
+      ctx.beginPath(); ctx.moveTo(e.x, 35); ctx.lineTo(e.x + 18, e.y * .45); ctx.lineTo(e.x - 12, e.y * .72); ctx.lineTo(e.x + 8, e.y); ctx.stroke();
+    } else if (e.type === 'shockwave') {
+      ctx.strokeStyle = 'rgba(255,238,77,.9)'; ctx.lineWidth = 3; ctx.shadowColor = '#ffe84a'; ctx.shadowBlur = 22;
+      ctx.beginPath(); ctx.arc(e.x, e.y, (e.radius || 55) * p, 0, Math.PI * 2); ctx.stroke();
+    } else if (e.type === 'shatter') {
+      ctx.strokeStyle = 'rgba(180,240,255,.95)'; ctx.lineWidth = 2; ctx.shadowColor = '#9eefff'; ctx.shadowBlur = 24;
+      for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2; ctx.beginPath(); ctx.moveTo(e.x, e.y); ctx.lineTo(e.x + Math.cos(a) * 65 * p, e.y + Math.sin(a) * 65 * p); ctx.stroke(); }
+    }
+    ctx.restore();
+  }
 }
 
 function drawUltimateFx(hero, p, W, H) {
@@ -264,9 +420,19 @@ function frame(now) {
   const W = window.innerWidth, H = window.innerHeight;
   ctx.clearRect(0, 0, W, H);
   if (state.screen === 'combat') {
+    if (state.pendingSkillChoice && !state.autoPickSkills) {
+      requestAnimationFrame(frame);
+      return;
+    }
     observeProjectiles(now);
     drawMonsterSprites(now);
+    drawMonsterHpBars(now);
     drawHeroSprites(now, W, H);
+<<<<<<< HEAD
+=======
+    drawCombatEffects(now, W, H);
+    drawFloatingTexts();
+>>>>>>> d12e53c (hp bars, more levels etc)
     drawCombatBorders(W, H);
   }
   requestAnimationFrame(frame);

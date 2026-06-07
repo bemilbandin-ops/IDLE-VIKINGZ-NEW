@@ -3,6 +3,11 @@
 import { roundRect, hexToRgb, saveGameState, getShopPanelDims, getHeroUpgradePanelDims, getDisplayedGold } from './utils.js';
 import { applySkillChoice } from './skills.js';
 import { checkAchievements, claimAchievement, getAchievementList } from './achievements.js';
+<<<<<<< HEAD
+=======
+import { ascendHero, canAscendHero, getAscensionCost, getAscensionTier, getNextAscensionTier, getHeroDisplayName } from './ascension.js';
+import { levels } from '../data/levels.js';
+>>>>>>> d12e53c (hp bars, more levels etc)
 
 const T = () => Date.now();
 
@@ -83,9 +88,13 @@ export function drawTitleScreen(ctx, W, H, state) {
     drawRuneButton(ctx, btnX, btnY + (btnH + 16) * 2, btnW, btnH, '⚙  GEAR', state.mouse, '#5a3070', '#b07af0');
     drawRuneButton(ctx, btnX, btnY + (btnH + 16) * 3, btnW, btnH, '◈  SHOP', state.mouse, '#8b4513', '#c87820');
 
+<<<<<<< HEAD
     // Auto skill toggle
     const toggle = getAutoPickToggleRect(W, H);
     drawRuneButton(ctx, toggle.x, toggle.y, toggle.w, toggle.h, `Auto Pick Skills: ${state.autoPickSkills ? 'ON' : 'OFF'}`, state.mouse, state.autoPickSkills ? '#1f6b38' : '#5a3310', state.autoPickSkills ? '#58d878' : '#d4a017', false, false);
+=======
+    drawAutoPickToggle(ctx, W, H, state);
+>>>>>>> d12e53c (hp bars, more levels etc)
 
     const achievementButton = getAchievementsButtonRect(W, H);
     const achievements = getAchievementList(state);
@@ -123,39 +132,66 @@ export function drawLevelSelectScreen(ctx, W, H, state) {
     ctx.fillStyle = '#f0c040';
     ctx.font = `bold ${Math.round(H * 0.05)}px 'Cinzel', serif`;
     ctx.shadowColor = '#d4a017'; ctx.shadowBlur = 14;
-    ctx.fillText('CHOOSE YOUR BATTLE', W / 2, H * 0.14);
+    ctx.fillText('CHOOSE YOUR BATTLE', W / 2, H * 0.12);
     ctx.shadowBlur = 0;
 
     // Decorative line
     const dl = W * 0.5;
     ctx.strokeStyle = 'rgba(212,160,23,0.4)'; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(W/2 - dl/2, H * 0.19); ctx.lineTo(W/2 + dl/2, H * 0.19); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(W/2 - dl/2, H * 0.17); ctx.lineTo(W/2 + dl/2, H * 0.17); ctx.stroke();
 
-    const cardW = Math.min(W * 0.24, 220);
-    const cardH = H * 0.52;
-    const gap = W * 0.04;
-    const totalW = cardW * 3 + gap * 2;
-    const startX = W / 2 - totalW / 2;
-    const cardY = H * 0.24;
+    drawAutoPickToggle(ctx, W, H, state);
 
-    const LEVELS = [
-        { name: 'The Northern Pass', sub: 'Easy', desc: 'A gentle introduction\nto the Norse wilds.', icon: '🏔', color: '#4a8fa8', glow: '#7ec8e3' },
-        { name: 'Frosthold Depths', sub: 'Medium', desc: 'Deeper into frozen\nhalls of stone.', icon: '🌨', color: '#6a4090', glow: '#b07af0' },
-        { name: 'Ruin of Jarls', sub: 'Hard', desc: 'The fallen fortress\nof ancient kings.', icon: '💀', color: '#8b1a1a', glow: '#ff4444' }
-    ];
-
-    LEVELS.forEach((lvl, i) => {
-        const cx = startX + i * (cardW + gap);
+    const layout = getLevelSelectLayout(W, H, levels.length);
+    levels.forEach((levelData, i) => {
+        const pos = getLevelCardPosition(layout, i);
         const isLocked = i > state.highestUnlockedLevel;
         const isHov = !isLocked &&
-            state.mouse.x >= cx && state.mouse.x <= cx + cardW &&
-            state.mouse.y >= cardY && state.mouse.y <= cardY + cardH;
+            state.mouse.x >= pos.x && state.mouse.x <= pos.x + layout.cardW &&
+            state.mouse.y >= pos.y && state.mouse.y <= pos.y + layout.cardH;
 
-        drawLevelCard(ctx, cx, cardY, cardW, cardH, lvl, isLocked, isHov, t + i * 300);
+        drawLevelCard(ctx, pos.x, pos.y, layout.cardW, layout.cardH, getLevelCardMeta(levelData, i), isLocked, isHov, t + i * 300);
     });
 
     // Back button
     drawRuneButton(ctx, 20, 20, 130, 42, '← Back', state.mouse, '#555', '#888', false, true);
+}
+
+function getLevelSelectLayout(W, H, count) {
+    const cols = count <= 3 ? count : (W < 720 ? 3 : W < 980 ? 4 : 5);
+    const rows = Math.ceil(count / cols);
+    const gapX = Math.max(10, Math.min(18, W * 0.014));
+    const gapY = Math.max(10, Math.min(16, H * 0.018));
+    const maxCardW = count <= 3 ? 220 : 184;
+    const topY = count <= 3 ? H * 0.24 : H * 0.22;
+    const bottomPad = H * 0.055;
+    const usableW = W * 0.92;
+    const usableH = H - topY - bottomPad;
+    const cardW = Math.min(maxCardW, (usableW - gapX * (cols - 1)) / cols);
+    const cardH = Math.min(count <= 3 ? H * 0.52 : 218, (usableH - gapY * (rows - 1)) / rows);
+    const totalW = cardW * cols + gapX * (cols - 1);
+    const totalH = cardH * rows + gapY * (rows - 1);
+    return { cols, rows, gapX, gapY, cardW, cardH, startX: W / 2 - totalW / 2, startY: topY + Math.max(0, (usableH - totalH) / 2) };
+}
+
+function getLevelCardPosition(layout, index) {
+    const col = index % layout.cols;
+    const row = Math.floor(index / layout.cols);
+    return {
+        x: layout.startX + col * (layout.cardW + layout.gapX),
+        y: layout.startY + row * (layout.cardH + layout.gapY)
+    };
+}
+
+function getLevelCardMeta(levelData, index) {
+    return {
+        name: levelData.name || `Level ${index + 1}`,
+        sub: levelData.sub || `Level ${index + 1}`,
+        desc: levelData.desc || `HP x${levelData.hpMult || 1}\nGold x${levelData.goldMult || 1}`,
+        icon: levelData.icon || '⚔',
+        color: levelData.color || '#8b6010',
+        glow: levelData.glow || '#f0c040'
+    };
 }
 
 // ── Combat Overlays ───────────────────────────────────────────────────────────
@@ -167,6 +203,8 @@ export function drawCombatOverlays(ctx, W, H, state) {
     const qX = W - qW - 14;
     const qY = (barH - qH) / 2;
     drawRuneButton(ctx, qX, qY, qW, qH, '✕ QUIT', state.mouse, '#6a1010', '#ff4444', false, true);
+
+    drawAutoPickToggle(ctx, W, H, state);
 
     // Wave cleared banner
     if (state.waveTransitioning && !state.levelComplete) {
@@ -253,18 +291,23 @@ function drawVictoryScreen(ctx, W, H, state) {
     ctx.font = `18px 'Crimson Text', serif`;
     ctx.fillText(`Gold earned: ${Math.floor(state.sessionGold)}`, W / 2, H * 0.60);
 
-    // Shard drop display
+    // Shard reward display
+    const shardRewards = state.pendingShardRewards || [];
     const shardHero = state.levelCompletedShardHero;
-    if (shardHero) {
+    if (shardRewards.length > 0) {
         ctx.fillStyle = '#7ec8e3';
         ctx.font = `16px 'Crimson Text', serif`;
-        ctx.fillText(`Shard found: ${shardHero.toUpperCase()} +1`, W / 2, H * 0.65);
+        const rewardText = shardRewards.map(reward => {
+            const label = reward.type === 'firstClear' ? 'First clear' : 'Rare drop';
+            return `${label}: ${getHeroDisplayName(reward.heroId)} +${reward.amount}`;
+        }).join('  •  ');
+        ctx.fillText(rewardText, W / 2, H * 0.65);
     }
 
     // Gear rewards display
     const gearRewards = state.pendingGearRewards || [];
     if (gearRewards.length > 0) {
-        const gy = H * (shardHero ? 0.70 : 0.65);
+        const gy = H * (shardRewards.length > 0 ? 0.70 : 0.65);
         ctx.font = `bold 14px 'Cinzel', serif`;
         ctx.fillStyle = '#b07af0';
         ctx.shadowColor = '#b07af0'; ctx.shadowBlur = 8;
@@ -278,7 +321,7 @@ function drawVictoryScreen(ctx, W, H, state) {
         });
     }
 
-    const extraShift = (shardHero ? 8 : 0) + (gearRewards.length > 0 ? gearRewards.length * 20 + 20 : 0);
+    const extraShift = (shardRewards.length > 0 ? 8 : 0) + (gearRewards.length > 0 ? gearRewards.length * 20 + 20 : 0);
     drawRuneButton(ctx, W/2 - 110, H * 0.68 + extraShift, 220, 54, 'Continue ▶', state.mouse, '#8b6010', '#f0c040', true);
 }
 
@@ -426,7 +469,7 @@ function drawHeroUpgradeOverlay(ctx, W, H, state) {
         roundRect(ctx, cX, cY, colW, cH, 8); ctx.fill(); ctx.stroke();
 
         // Hero portrait
-        const portH = colW * 0.75;
+        const portH = colW * 0.55;
         ctx.fillStyle = `rgba(${hexToRgb(hero.color)},0.18)`;
         roundRect(ctx, cX + 10, cY + 10, colW - 20, portH, 6); ctx.fill();
         ctx.font = `${portH * 0.55}px serif`;
@@ -447,6 +490,34 @@ function drawHeroUpgradeOverlay(ctx, W, H, state) {
         ctx.fillText(`Hero Lv ${heroLevel}`, cX + colW - 16, cY + 24);
         ctx.textAlign = 'center';
 
+        const tier = getAscensionTier(state, hero.id);
+        const nextTier = getNextAscensionTier(state, hero.id);
+        const shardCount = (state.shards && state.shards[hero.id]) || 0;
+        const ascendCost = getAscensionCost(state, hero.id);
+        ctx.font = `bold 11px 'Cinzel', serif`;
+        ctx.fillStyle = tier.color;
+        ctx.shadowColor = tier.color; ctx.shadowBlur = 5;
+        ctx.fillText(`${tier.name.toUpperCase()}  x${tier.statMultiplier.toFixed(2)}`, cX + colW / 2, cY + 10 + portH + 49);
+        ctx.shadowBlur = 0;
+        ctx.font = `11px 'Crimson Text', serif`;
+        ctx.fillStyle = '#c8e8f0';
+        ctx.fillText(`Shards: ${shardCount}${ascendCost ? ` / ${ascendCost}` : ' / MAX'}`, cX + colW / 2, cY + 10 + portH + 65);
+        if (nextTier) {
+            const canAscend = canAscendHero(state, hero.id);
+            const aW = Math.min(116, colW - 24), aH = 22;
+            drawRuneButton(ctx, cX + colW / 2 - aW / 2, cY + 10 + portH + 74, aW, aH,
+                `Ascend: ${nextTier.name}`, state.mouse,
+                canAscend ? darkenColor(nextTier.color) : '#1a1008',
+                canAscend ? nextTier.color : '#444',
+                canAscend, !canAscend);
+        }
+
+        ctx.textAlign = 'right';
+        ctx.font = `bold 10px 'Cinzel', serif`;
+        ctx.fillStyle = '#fff3b0';
+        ctx.fillText(`Hero Lv ${heroLevel}`, cX + colW - 16, cY + 24);
+        ctx.textAlign = 'center';
+
         // Upgrade buttons
         const upgs = HERO_UPGRADE_TYPES;
 
@@ -454,8 +525,8 @@ function drawHeroUpgradeOverlay(ctx, W, H, state) {
             const lvl = upgrades[u.key];
             const cost = u.base + lvl * u.mul;
             const canAfford = state.gold >= cost;
-            const uY = cY + 10 + portH + 46 + j * (cH * 0.19);
-            const uH = cH * 0.16;
+            const uY = cY + 10 + portH + 104 + j * (cH * 0.145);
+            const uH = cH * 0.13;
 
             ctx.fillStyle = canAfford ? `rgba(${hexToRgb(hero.color)},0.12)` : 'rgba(30,20,10,0.4)';
             ctx.strokeStyle = canAfford ? `rgba(${hexToRgb(hero.color)},0.35)` : 'rgba(60,50,40,0.3)';
@@ -990,6 +1061,11 @@ const HERO_GLOWS = {
     hilda:  '#7ec8e3',
     bjorn:  '#c8822a',
 };
+const HERO_NAMES = {
+    astrid: 'Astrid',
+    hilda: 'Hilda',
+    bjorn: 'Bjorn',
+};
 
 // Returns layout rects for the 3 skill cards so handleClick can reuse them
 function getSkillCardRects(W, H) {
@@ -1027,6 +1103,7 @@ function drawSkillChoicePopup(ctx, W, H, state) {
         const hovered = mouse.x >= cardX && mouse.x <= cardX + cardW &&
                         mouse.y >= cardY && mouse.y <= cardY + cardH;
         const heroId = (skill.id || 'astrid').split('_')[0];
+        const heroName = HERO_NAMES[heroId] || 'Hero';
         const accent = HERO_COLORS[heroId] || '#d4a017';
         const glow   = HERO_GLOWS[heroId]  || '#f0c040';
         const cx = cardX + cardW / 2;
@@ -1053,23 +1130,27 @@ function drawSkillChoicePopup(ctx, W, H, state) {
         ctx.font = `${iconSize}px serif`;
         ctx.globalAlpha = hovered ? 1 : 0.75;
         const iconEmoji = heroId === 'astrid' ? '\u{1F3F9}' : heroId === 'hilda' ? '\u2744\uFE0F' : '\u26A1';
-        ctx.fillText(iconEmoji, cx, cardY + cardH * 0.12);
+        ctx.fillText(iconEmoji, cx, cardY + cardH * 0.105);
         ctx.globalAlpha = 1;
+
+        ctx.font = `bold ${Math.min(Math.round(cardH * 0.044), 12)}px 'Cinzel', serif`;
+        ctx.fillStyle = accent + 'ee';
+        ctx.fillText(heroName.toUpperCase(), cx, cardY + cardH * 0.20);
 
         let nameSize = Math.min(Math.round(cardH * 0.072), 18);
         ctx.font = `bold ${nameSize}px 'Cinzel', serif`;
         while (ctx.measureText(skill.name).width > cardW * 0.88 && nameSize > 8) { nameSize--; ctx.font = `bold ${nameSize}px 'Cinzel', serif`; }
         ctx.fillStyle = hovered ? '#fff8c0' : '#e8d8a8';
         if (hovered) { ctx.shadowColor = glow; ctx.shadowBlur = 8; }
-        ctx.fillText(skill.name, cx, cardY + cardH * 0.30);
+        ctx.fillText(skill.name, cx, cardY + cardH * 0.315);
         ctx.shadowBlur = 0;
 
         ctx.font = `${Math.min(Math.round(cardH * 0.048), 12)}px 'Cinzel', serif`;
         ctx.fillStyle = accent + 'dd';
-        ctx.fillText((skill.type || '').replace('_',' ').toUpperCase(), cx, cardY + cardH * 0.42);
+        ctx.fillText((skill.type || '').replace('_',' ').toUpperCase(), cx, cardY + cardH * 0.43);
 
         ctx.strokeStyle = accent + '44'; ctx.lineWidth = 1;
-        ctx.beginPath(); ctx.moveTo(cardX + cardW*0.12, cardY + cardH*0.49); ctx.lineTo(cardX + cardW*0.88, cardY + cardH*0.49); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(cardX + cardW*0.12, cardY + cardH*0.50); ctx.lineTo(cardX + cardW*0.88, cardY + cardH*0.50); ctx.stroke();
 
         const desc = skill.description || '';
         const availH = cardH * 0.36;
@@ -1087,7 +1168,7 @@ function drawSkillChoicePopup(ctx, W, H, state) {
         ctx.fillStyle = 'rgba(210,195,155,0.92)';
         const lineH2 = descSz * 1.35;
         const totalH2 = descLines.length * lineH2;
-        const dStartY = cardY + cardH * 0.53 + (availH - totalH2) / 2 + lineH2 / 2;
+        const dStartY = cardY + cardH * 0.54 + (availH - totalH2) / 2 + lineH2 / 2;
         descLines.forEach((l, li) => ctx.fillText(l, cx, dStartY + li * lineH2));
 
         if (hovered) {
@@ -1140,16 +1221,29 @@ export function handleClick(state, levelIndex, clickX, clickY, W, H) {
             HERO_IDS.forEach((id, i) => {
                 const cX = pX + 16 + i * (colW + 8);
                 const cY = pY + pH * 0.21;
-                const portH = colW * 0.75;
+                const portH = colW * 0.55;
                 const upgrades = state.permanentUpgrades[id];
                 const hero = { id, color: ['#c8962a','#4a8fa8','#6b3d11'][i] };
+<<<<<<< HEAD
                 const upgs = HERO_UPGRADE_TYPES;
+=======
+>>>>>>> d12e53c (hp bars, more levels etc)
                 const cH = pH * 0.72;
+                const ascendCost = getAscensionCost(state, id);
+                if (ascendCost !== null) {
+                    const aW = Math.min(116, colW - 24), aH = 22;
+                    const aX = cX + colW / 2 - aW / 2;
+                    const aY = cY + 10 + portH + 74;
+                    if (inRect(mouse, aX, aY, aW, aH) && ascendHero(state, id)) {
+                        saveGameState(state);
+                    }
+                }
+                const upgs = HERO_UPGRADE_TYPES;
                 upgs.forEach((u, j) => {
                     const lvl = upgrades[u.key];
                     const cost = u.base + lvl * u.mul;
-                    const uY = cY + 10 + portH + 46 + j * (cH * 0.19);
-                    const uH = cH * 0.16;
+                    const uY = cY + 10 + portH + 104 + j * (cH * 0.145);
+                    const uH = cH * 0.13;
                     const bW2 = 64, bH2 = 22;
                     const bX2 = cX + colW - bW2 - 10, bY2 = uY + (uH - bH2) / 2;
                     if (inRect(mouse, bX2, bY2, bW2, bH2) && state.gold >= cost) {
@@ -1175,8 +1269,12 @@ export function handleClick(state, levelIndex, clickX, clickY, W, H) {
         }
 
         if (inRect(mouse, autoToggle.x, autoToggle.y, autoToggle.w, autoToggle.h)) {
+<<<<<<< HEAD
             state.autoPickSkills = !state.autoPickSkills;
             saveGameState(state);
+=======
+            toggleAutoPickSkills(state);
+>>>>>>> d12e53c (hp bars, more levels etc)
             return { action:'none' };
         }
 
@@ -1193,17 +1291,17 @@ export function handleClick(state, levelIndex, clickX, clickY, W, H) {
     if (state.screen === 'levelSelect') {
         if (inRect(mouse, 20, 20, 130, 42)) { state.screen = 'title'; return { action:'none' }; }
 
-        const cardW = Math.min(W * 0.24, 220);
-        const cardH = H * 0.52;
-        const gap = W * 0.04;
-        const totalW = cardW * 3 + gap * 2;
-        const startX = W / 2 - totalW / 2;
-        const cardY = H * 0.24;
+        const autoToggle = getAutoPickToggleRect(W, H);
+        if (inRect(mouse, autoToggle.x, autoToggle.y, autoToggle.w, autoToggle.h)) {
+            toggleAutoPickSkills(state);
+            return { action:'none' };
+        }
 
-        for (let i = 0; i < 3; i++) {
+        const layout = getLevelSelectLayout(W, H, levels.length);
+        for (let i = 0; i < levels.length; i++) {
             if (i <= state.highestUnlockedLevel) {
-                const cx = startX + i * (cardW + gap);
-                if (inRect(mouse, cx, cardY, cardW, cardH)) {
+                const pos = getLevelCardPosition(layout, i);
+                if (inRect(mouse, pos.x, pos.y, layout.cardW, layout.cardH)) {
                     state.currentLevel = i;
                     return { action: 'startLevel', levelIndex: i };
                 }
@@ -1212,6 +1310,12 @@ export function handleClick(state, levelIndex, clickX, clickY, W, H) {
     }
 
     if (state.screen === 'combat') {
+        const autoToggle = getAutoPickToggleRect(W, H);
+        if (!state.levelComplete && !state.levelFailed && inRect(mouse, autoToggle.x, autoToggle.y, autoToggle.w, autoToggle.h)) {
+            toggleAutoPickSkills(state);
+            return { action:'none' };
+        }
+
         // Skill choice popup intercepts all clicks while open
         if (state.pendingSkillChoice && state.skillChoices && state.skillChoices.length > 0) {
             const { cardX: _cx, cardW, cardH, cardY, cardGap, panelX } = getSkillCardRects(W, H);
@@ -1231,9 +1335,9 @@ export function handleClick(state, levelIndex, clickX, clickY, W, H) {
         if (inRect(mouse, qX, qY, qW, qH)) return { action: 'quitToMenu' };
 
         if (state.levelComplete) {
-            const shardHero2 = state.levelCompletedShardHero;
+            const shardRewards2 = state.pendingShardRewards || [];
             const gearR = state.pendingGearRewards || [];
-            const extraShift2 = (shardHero2 ? 8 : 0) + (gearR.length > 0 ? gearR.length * 20 + 20 : 0);
+            const extraShift2 = (shardRewards2.length > 0 ? 8 : 0) + (gearR.length > 0 ? gearR.length * 20 + 20 : 0);
             if (inRect(mouse, W/2-110, H*0.68 + extraShift2, 220, 54)) return { action: 'quitToMenu' };
         }
         if (state.levelFailed) {
@@ -1247,8 +1351,32 @@ export function handleClick(state, levelIndex, clickX, clickY, W, H) {
 }
 
 // ── Utility ───────────────────────────────────────────────────────────────────
+<<<<<<< HEAD
 function getAutoPickToggleRect(W, H) {
     return { x: 16, y: Math.max(70, H * 0.12), w: 220, h: 36 };
+=======
+function drawAutoPickToggle(ctx, W, H, state) {
+    const toggle = getAutoPickToggleRect(W, H);
+    drawRuneButton(
+        ctx, toggle.x, toggle.y, toggle.w, toggle.h,
+        `Auto Skills + 2x: ${state.autoPickSkills ? 'ON' : 'OFF'}`,
+        state.mouse,
+        state.autoPickSkills ? '#1f6b38' : '#5a3310',
+        state.autoPickSkills ? '#58d878' : '#d4a017',
+        state.autoPickSkills,
+        false
+    );
+}
+
+function toggleAutoPickSkills(state) {
+    state.autoPickSkills = !state.autoPickSkills;
+    state.gameSpeed = state.autoPickSkills ? 2 : 1;
+    saveGameState(state);
+}
+
+function getAutoPickToggleRect(W, H) {
+    return { x: 16, y: Math.max(70, H * 0.12), w: 200, h: 36 };
+>>>>>>> d12e53c (hp bars, more levels etc)
 }
 
 function getAchievementsButtonRect(W, H) {

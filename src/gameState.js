@@ -1,5 +1,6 @@
 import { heroes } from '../data/heroes.js';
 import { levels } from '../data/levels.js';
+import { applyAscensionStats, createDefaultHeroAscensions } from './ascension.js';
 
 export const state = {
     screen: 'title',
@@ -9,12 +10,16 @@ export const state = {
     heroes: [],
     monsters: [],
     projectiles: [],
+    combatEffects: [],
     barricade: { hp: 500, maxHp: 500, dead: false },
     floatingTexts: [],
     gold: 0,
     displayGold: 0,
     goldDisplayTimer: 0,
     shards: { astrid: 0, hilda: 0, bjorn: 0 },
+    heroAscensions: createDefaultHeroAscensions(),
+    firstClearShardRewards: {},
+    pendingShardRewards: [],
     permanentUpgrades: {
         astrid: { atk: 0, income: 0, atkSpeed: 0 },
         hilda: { atk: 0, income: 0, atkSpeed: 0 },
@@ -38,6 +43,7 @@ export const state = {
     waveCleared: false,
     waveTransitionTimer: 0,
     waveTransitioning: false,
+    bossWarningsShown: {},
     levelComplete: false,
     levelFailed: false,
     // Skill selection popup
@@ -75,15 +81,19 @@ export function resetLevelState(state, levelIndex, W, H) {
     state.waveCleared = false;
     state.waveTransitionTimer = 0;
     state.waveTransitioning = false;
+    state.bossWarningsShown = {};
     state.levelComplete = false;
     state.levelFailed = false;
     state.pendingSkillChoice = false;
     state.skillChoices = [];
     state.monsters = [];
     state.projectiles = [];
+    state.combatEffects = [];
     state.floatingTexts = [];
     state.party = { level: 1, exp: 0, activeSkills: [] };
     state.pendingGearRewards = [];
+    state.pendingShardRewards = [];
+    state.levelCompletedShardHero = null;
 
     const heroSize = Math.min(H * 0.12, 80);
     const heroSpacing = Math.min(Math.max(heroSize * 2.25, W * 0.20), W * 0.29);
@@ -107,7 +117,8 @@ export function resetLevelState(state, levelIndex, W, H) {
 
     state.barricade = { hp: levelData.barricadeHp, maxHp: levelData.barricadeHp, dead: false };
 
-    // Apply equipped gear effects on level start
+    // Apply ascension and equipped gear effects on level start
+    applyAscensionStats(state);
     applyEquippedGear(state);
 }
 

@@ -1,5 +1,9 @@
 import { drawHealthBar, spawnTorchParticle } from './canvas.js';
 import { formatGold, getDisplayedGold, idleGoldPerHour, roundRect } from './utils.js';
+<<<<<<< HEAD
+=======
+import { getExpNeededForPartyLevel } from './progression.js';
+>>>>>>> d12e53c (hp bars, more levels etc)
 
 // Torch positions relative to barricade — filled in drawBarricade, used by HUD tick
 let _torchPositions = [];
@@ -164,7 +168,7 @@ export function drawHUD(ctx, W, H, state) {
     ctx.shadowBlur = 0;
 
     // XP bar
-    const xpNeeded = Math.floor(50 * state.party.level * 1.2);
+    const xpNeeded = getExpNeededForPartyLevel(state.party.level);
     const xpPct = Math.min(1, state.party.exp / xpNeeded);
     const xBarX = W / 2 - W * 0.1, xBarY = barH - 7, xBarW = W * 0.2;
     ctx.fillStyle = '#1a1008';
