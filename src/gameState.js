@@ -74,11 +74,14 @@ export function resetLevelState(state, levelIndex, W, H) {
     const heroSize = Math.min(H * 0.12, 80);
     const heroSpacing = Math.min(Math.max(heroSize * 2.25, W * 0.20), W * 0.29);
     const centerX = W / 2;
+    const panelH = Math.max(110, H * 0.16);
+    const panelY = H - panelH;
+    const heroY = panelY + panelH * 0.32;
 
     state.heroes = heroes.map((hero, i) => ({
         ...hero,
         x: centerX - heroSpacing + i * heroSpacing,
-        y: H * 0.65,
+        y: heroY,
         hp: hero.baseStats.hp,
         maxHp: hero.baseStats.hp,
         atk: hero.baseStats.atk,
