@@ -104,6 +104,9 @@ window.addEventListener('keydown', (e) => {
 });
 
 function startLevel(levelIndex, W, H) {
+    state.currentLevel = levelIndex;
+    state.sessionGold = 0;
+    state.runStartedAt = Date.now();
     resetLevelState(state, levelIndex, W, H);
     state.screen = 'combat';
     spawnWave(state, levels[state.currentLevel]);
