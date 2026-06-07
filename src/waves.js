@@ -91,6 +91,12 @@ function triggerSkillChoice(state) {
 }
 
 const EXP_PER_LEVEL = 60;
+const BASE_EXP_REWARD_SCALE = 0.6;
+const EXP_GAIN_MULTIPLIER = 1.2;
+
+function getMonsterExpReward(monster) {
+    return monster.expReward * BASE_EXP_REWARD_SCALE * EXP_GAIN_MULTIPLIER;
+}
 
 export function updateMonsters(state, dt) {
     const H = getH();
@@ -134,7 +140,7 @@ export function updateMonsters(state, dt) {
                 const goldReward = Math.floor(monster.goldReward * incomeMult);
                 state.gold += goldReward;
                 state.sessionGold += goldReward;
-                const scaledExp = monster.expReward * 0.6;
+                const scaledExp = getMonsterExpReward(monster);
                 state.party.exp += scaledExp;
                 while (state.party.exp >= EXP_PER_LEVEL) {
                     state.party.level++;
@@ -171,7 +177,7 @@ export function updateMonsters(state, dt) {
             state.gold += goldReward;
             state.sessionGold += goldReward;
 
-            const scaledExp = monster.expReward * 0.6;
+            const scaledExp = getMonsterExpReward(monster);
             state.party.exp += scaledExp;
 
             while (state.party.exp >= EXP_PER_LEVEL) {
