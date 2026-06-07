@@ -87,40 +87,80 @@ function resize() {
 }
 
 function heroPanelY(H) {
-  return H - Math.max(110, H * 0.16) + Math.max(110, H * 0.16) * 0.46;
+  const panelH = Math.max(110, H * 0.16);
+  return H - panelH + panelH * 0.32;
+}
+
+function combatTopBorderY(H) {
+  return Math.max(52, H * 0.07) + 10;
 }
 
 function heroSize(W, H) {
-  return Math.min(Math.max(42, W * 0.052), Math.max(58, H * 0.105));
+  return Math.min(Math.max(38, W * 0.047), Math.max(52, H * 0.092));
 }
 
 function getHeroLevel(hero) {
-  const up = state.permanentUpgrades?.[hero.id];
-  if (!up) return state.party?.level || 1;
-  return 1 + (up.atk || 0) + (up.income || 0) + (up.atkSpeed || 0);
+  const pickedSkills = (state.party?.activeSkills || []).filter(skill => (skill.id || '').startsWith(`${hero.id}_`)).length;
+  return 1 + pickedSkills;
+}
+
+function drawPanelMaskForOldHeroText(hero, H) {
+  const panelH = Math.max(110, H * 0.16);
+  const oldY = H - panelH + panelH * 0.46;
+  ctx.save();
+  ctx.fillStyle = '#060504';
+  ctx.fillRect(hero.x - 58, oldY + panelH * 0.17, 116, panelH * 0.47);
+  ctx.restore();
 }
 
 function drawHeroLevelLabel(hero, x, y, size) {
   const cfg = heroCfg[hero.id] || heroCfg.astrid;
   const label = `LV ${getHeroLevel(hero)}`;
-  const w = Math.max(58, ctx.measureText(label).width + 26);
-  const h = 22;
-  const ly = y + size * 1.12;
   ctx.save();
+  ctx.font = "bold 13px Cinzel, Georgia, serif";
+  const w = Math.max(62, ctx.measureText(label).width + 28);
+  const h = 23;
+  const ly = y + size * 1.02;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillStyle = 'rgba(0,0,0,.72)';
+  ctx.fillStyle = 'rgba(0,0,0,.78)';
   ctx.beginPath();
   ctx.roundRect(x - w / 2, ly - h / 2, w, h, 8);
   ctx.fill();
   ctx.strokeStyle = hero.dead ? 'rgba(90,90,90,.7)' : cfg.glow;
-  ctx.lineWidth = 1.2;
+  ctx.lineWidth = 1.3;
   ctx.stroke();
-  ctx.font = "bold 12px Cinzel, Georgia, serif";
   ctx.fillStyle = hero.dead ? '#777' : '#fff3b0';
   ctx.shadowColor = hero.dead ? '#000' : cfg.glow;
-  ctx.shadowBlur = hero.dead ? 0 : 7;
+  ctx.shadowBlur = hero.dead ? 0 : 8;
   ctx.fillText(label, x, ly + 0.5);
+  ctx.restore();
+}
+
+function drawCombatBorders(W, H) {
+  const topY = combatTopBorderY(H);
+  const panelH = Math.max(110, H * 0.16);
+  const bottomY = H - panelH;
+  ctx.save();
+  ctx.lineCap = 'square';
+  ctx.shadowColor = '#d4a017';
+  ctx.shadowBlur = 10;
+  ctx.strokeStyle = 'rgba(240,192,64,.92)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(8, topY);
+  ctx.lineTo(W - 8, topY);
+  ctx.moveTo(8, topY);
+  ctx.lineTo(8, H - 8);
+  ctx.moveTo(W - 8, topY);
+  ctx.lineTo(W - 8, H - 8);
+  ctx.moveTo(8, bottomY);
+  ctx.lineTo(W - 8, bottomY);
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = 'rgba(0,0,0,.75)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(13, topY + 5, W - 26, Math.max(10, bottomY - topY - 10));
   ctx.restore();
 }
 
@@ -209,6 +249,7 @@ function drawHeroSprites(now, W, H) {
     const wave = a == null ? 0 : Math.sin(a * Math.PI);
     const dx = hero.id === 'astrid' ? -wave * size * .08 : hero.id === 'bjorn' ? wave * size * .08 : 0;
     const dy = hero.id === 'hilda' ? -wave * size * .08 : -wave * size * .035;
+    drawPanelMaskForOldHeroText(hero, H);
     if (a != null) drawAttackFx(hero, hero.x, y, size, a);
     if (u != null) drawUltimateFx(hero, u, W, H);
     drawSvgSprite(ctx, cfg.key, hero.x + dx, y + dy, size * 1.95, size * 1.95, { rotation: (hero.dead ? -.08 : Math.sin(now * .0018 + hero.x) * .015 + (hero.id === 'bjorn' ? wave * .08 : hero.id === 'astrid' ? -wave * .05 : 0)), bob: hero.dead ? 0 : Math.sin(now * .003 + hero.x) * 1.8, shadowColor: hero.dead ? '#333' : cfg.glow, shadowBlur: hero.dead ? 0 : 12 + wave * 14 + (u != null ? 16 : 0), alpha: hero.dead ? .35 : 1, fallbackColor: cfg.glow });
@@ -226,6 +267,7 @@ function frame(now) {
     observeProjectiles(now);
     drawMonsterSprites(now);
     drawHeroSprites(now, W, H);
+    drawCombatBorders(W, H);
   }
   requestAnimationFrame(frame);
 }
