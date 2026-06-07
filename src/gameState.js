@@ -25,6 +25,7 @@ export const state = {
     // Pending gear rewards after level end
     pendingGearRewards: [],
     sessionGold: 0,
+    runStartedAt: 0,
     debugMode: false,
     mouse: { x: 0, y: 0 },
     highestUnlockedLevel: 0,

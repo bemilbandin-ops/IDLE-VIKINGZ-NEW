@@ -4,6 +4,22 @@ import { roundRect, hexToRgb, saveGameState, getShopPanelDims, getHeroUpgradePan
 
 const T = () => Date.now();
 
+const HERO_UPGRADE_TYPES = [
+    { key: 'atk', label: '⚔ Attack', base: 50, mul: 25, bonusLabel: 'attack' },
+    { key: 'income', label: '💰 Income', base: 40, mul: 20, bonusLabel: 'income' },
+    { key: 'atkSpeed', label: '⚡ Speed', base: 60, mul: 30, bonusLabel: 'attack speed' }
+];
+const HERO_UPGRADE_BONUS_STEP = 5;
+
+function getUpgradeBonusText(level, bonusLabel) {
+    return `+${level * HERO_UPGRADE_BONUS_STEP}% ${bonusLabel}`;
+}
+
+function getUpgradePreviewText(bonusLabel) {
+    return `+${HERO_UPGRADE_BONUS_STEP}% ${bonusLabel}`;
+}
+
+
 // ── Title Screen ─────────────────────────────────────────────────────────────
 export function drawTitleScreen(ctx, W, H, state) {
     // Already have atmospheric bg from clearScreen. Add layered title elements.
@@ -389,6 +405,7 @@ function drawHeroUpgradeOverlay(ctx, W, H, state) {
         const cY = pY + pH * 0.21;
         const cH = pH * 0.72;
         const upgrades = state.permanentUpgrades[hero.id];
+        const heroLevel = 1 + upgrades.atk + upgrades.income + upgrades.atkSpeed;
 
         // Card
         ctx.fillStyle = `rgba(${hexToRgb(hero.color)},0.10)`;
@@ -412,13 +429,14 @@ function drawHeroUpgradeOverlay(ctx, W, H, state) {
         ctx.font = `italic 12px 'Crimson Text', serif`;
         ctx.fillStyle = '#888';
         ctx.fillText(hero.title, cX + colW / 2, cY + 10 + portH + 32);
+        ctx.textAlign = 'right';
+        ctx.font = `bold 10px 'Cinzel', serif`;
+        ctx.fillStyle = '#fff3b0';
+        ctx.fillText(`Hero Lv ${heroLevel}`, cX + colW - 16, cY + 24);
+        ctx.textAlign = 'center';
 
         // Upgrade buttons
-        const upgs = [
-            { key: 'atk',      label: '⚔ Attack',  base: 50, mul: 25 },
-            { key: 'income',   label: '💰 Income',  base: 40, mul: 20 },
-            { key: 'atkSpeed', label: '⚡ Speed',   base: 60, mul: 30 }
-        ];
+        const upgs = HERO_UPGRADE_TYPES;
 
         upgs.forEach((u, j) => {
             const lvl = upgrades[u.key];
@@ -435,15 +453,15 @@ function drawHeroUpgradeOverlay(ctx, W, H, state) {
             ctx.textAlign = 'left';
             ctx.font = `bold 11px 'Cinzel', serif`;
             ctx.fillStyle = canAfford ? '#ddd' : '#666';
-            ctx.fillText(u.label, cX + 14, uY + uH * 0.32);
+            ctx.fillText(`${u.label} — Lv ${lvl}`, cX + 14, uY + uH * 0.24);
 
-            // Level pips
-            for (let p = 0; p < Math.min(lvl, 5); p++) {
-                ctx.fillStyle = canAfford ? hero.glow : '#555';
-                ctx.shadowColor = hero.glow; ctx.shadowBlur = canAfford ? 4 : 0;
-                ctx.beginPath(); ctx.arc(cX + 14 + p * 10, uY + uH * 0.7, 3, 0, Math.PI * 2); ctx.fill();
-                ctx.shadowBlur = 0;
-            }
+            ctx.font = `10px 'Crimson Text', serif`;
+            ctx.fillStyle = canAfford ? '#fff3b0' : '#777';
+            ctx.fillText(`Now: ${getUpgradeBonusText(lvl, u.bonusLabel)}`, cX + 14, uY + uH * 0.46);
+            ctx.fillStyle = canAfford ? hero.glow : '#666';
+            ctx.fillText(`Next: ${getUpgradeBonusText(lvl + 1, u.bonusLabel)} (${getUpgradePreviewText(u.bonusLabel)})`, cX + 14, uY + uH * 0.66);
+            ctx.fillStyle = canAfford ? '#d8c8a0' : '#555';
+            ctx.fillText(`Cost: ${cost} gold`, cX + 14, uY + uH * 0.84);
 
             const bW2 = 64, bH2 = 22;
             drawRuneButton(ctx, cX + colW - bW2 - 10, uY + (uH - bH2) / 2, bW2, bH2,
@@ -1018,11 +1036,7 @@ export function handleClick(state, levelIndex, clickX, clickY, W, H) {
                 const portH = colW * 0.75;
                 const upgrades = state.permanentUpgrades[id];
                 const hero = { id, color: ['#c8962a','#4a8fa8','#6b3d11'][i] };
-                const upgs = [
-                    { key:'atk',      base:50, mul:25 },
-                    { key:'income',   base:40, mul:20 },
-                    { key:'atkSpeed', base:60, mul:30 }
-                ];
+                const upgs = HERO_UPGRADE_TYPES;
                 const cH = pH * 0.72;
                 upgs.forEach((u, j) => {
                     const lvl = upgrades[u.key];
