@@ -1,6 +1,7 @@
 // ── Screens — Full visual overhaul ───────────────────────────────────────────
 
 import { roundRect, hexToRgb, saveGameState, getShopPanelDims, getHeroUpgradePanelDims, getDisplayedGold } from './utils.js';
+import { applySkillChoice } from './skills.js';
 
 const T = () => Date.now();
 
@@ -80,6 +81,10 @@ export function drawTitleScreen(ctx, W, H, state) {
     drawRuneButton(ctx, btnX, btnY + btnH + 16, btnW, btnH, '✦  HERO UPGRADES', state.mouse, '#4a8fa8', '#7ec8e3');
     drawRuneButton(ctx, btnX, btnY + (btnH + 16) * 2, btnW, btnH, '⚙  GEAR', state.mouse, '#5a3070', '#b07af0');
     drawRuneButton(ctx, btnX, btnY + (btnH + 16) * 3, btnW, btnH, '◈  SHOP', state.mouse, '#8b4513', '#c87820');
+
+    // Auto skill toggle
+    const toggle = getAutoPickToggleRect(W, H);
+    drawRuneButton(ctx, toggle.x, toggle.y, toggle.w, toggle.h, `Auto Pick Skills: ${state.autoPickSkills ? 'ON' : 'OFF'}`, state.mouse, state.autoPickSkills ? '#1f6b38' : '#5a3310', state.autoPickSkills ? '#58d878' : '#d4a017', false, false);
 
     // Gear count badge
     const gearCount = (state.gearInventory || []).length;
@@ -1057,6 +1062,13 @@ export function handleClick(state, levelIndex, clickX, clickY, W, H) {
             return { action: 'none' };
         }
 
+        const autoToggle = getAutoPickToggleRect(W, H);
+        if (inRect(mouse, autoToggle.x, autoToggle.y, autoToggle.w, autoToggle.h)) {
+            state.autoPickSkills = !state.autoPickSkills;
+            saveGameState(state);
+            return { action:'none' };
+        }
+
         // Main buttons
         const btnW = 240, btnH = 52, btnX = W/2 - btnW/2;
         const btnY = H * 0.60;
@@ -1096,11 +1108,7 @@ export function handleClick(state, levelIndex, clickX, clickY, W, H) {
             state.skillChoices.forEach((skill, i) => {
                 const cX = pX + cardGap + i * (cardW + cardGap);
                 if (inRect(mouse, cX, cY, cardW, cardH)) {
-                    // Apply skill effect
-                    if (typeof skill.effect === 'function') skill.effect(state);
-                    state.party.activeSkills.push(skill);
-                    state.pendingSkillChoice = false;
-                    state.skillChoices = [];
+                    applySkillChoice(state, skill);
                 }
             });
             return { action: 'none' };
@@ -1128,6 +1136,10 @@ export function handleClick(state, levelIndex, clickX, clickY, W, H) {
 }
 
 // ── Utility ───────────────────────────────────────────────────────────────────
+function getAutoPickToggleRect(W, H) {
+    return { x: 16, y: Math.max(70, H * 0.12), w: 220, h: 36 };
+}
+
 function inRect(m, x, y, w, h) { return m.x>=x && m.x<=x+w && m.y>=y && m.y<=y+h; }
 
 function darkenColor(hex) {
