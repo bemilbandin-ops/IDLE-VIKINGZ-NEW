@@ -28,6 +28,7 @@ function idleGoldPerSecond(state) {
 
 // Load saved progress on startup
 loadProgress(state);
+state.displayGold = state.gold;
 
 // ── Pause/resume when tab is hidden ─────────────────────────────────────────
 document.addEventListener('visibilitychange', () => {
@@ -104,6 +105,9 @@ window.addEventListener('keydown', (e) => {
 });
 
 function startLevel(levelIndex, W, H) {
+    state.currentLevel = levelIndex;
+    state.sessionGold = 0;
+    state.runStartedAt = Date.now();
     resetLevelState(state, levelIndex, W, H);
     state.screen = 'combat';
     spawnWave(state, levels[state.currentLevel]);
@@ -181,6 +185,13 @@ function update(dt) {
     if (state.idleGoldTimer >= 1) {
         state.idleGoldTimer -= 1;
         state.gold += idleGoldPerSecond(state); // tiny per-second passive drip
+    }
+
+    // Keep the visible gold counter calm/readable; actual gold still changes immediately.
+    state.goldDisplayTimer = (state.goldDisplayTimer || 0) + dt;
+    if (state.goldDisplayTimer >= 1) {
+        state.goldDisplayTimer = 0;
+        state.displayGold = state.gold;
     }
 
     if (state.screen === 'combat') {

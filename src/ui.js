@@ -1,9 +1,12 @@
 import { drawHealthBar, spawnTorchParticle } from './canvas.js';
-import { formatGold, roundRect } from './utils.js';
+import { formatGold, getDisplayedGold, idleGoldPerHour, roundRect } from './utils.js';
 
 // Torch positions relative to barricade — filled in drawBarricade, used by HUD tick
 let _torchPositions = [];
 let _torchTimer = 0;
+let _lastRunStatUpdate = 0;
+let _cachedRunStatRows = null;
+let _cachedRunStartedAt = 0;
 
 // Returns the Y coordinate of the top of the hero panel — the visual "front line" of heroes.
 // Projectiles should spawn here, not at hero.y (which is a game-logic coord with no sprite).
@@ -22,6 +25,78 @@ export function tickTorches(dt) {
             if (Math.random() < 0.6) spawnTorchParticle(pos.x, pos.y);
         });
     }
+}
+
+
+function formatStatNumber(value, decimals = 1) {
+    if (!Number.isFinite(value)) return '0';
+    if (Math.abs(value) >= 100) return Math.round(value).toString();
+    return value.toFixed(decimals).replace(/\.0$/, '');
+}
+
+function getPartyDps(state) {
+    return (state.heroes || []).reduce((total, hero) => {
+        if (!hero || hero.dead) return total;
+        return total + (hero.atk || 0) * (hero.atkSpeed || 0);
+    }, 0);
+}
+
+function getGoldPerMinute(state) {
+    if (!state.runStartedAt) return 0;
+    const elapsedMinutes = Math.max((Date.now() - state.runStartedAt) / 60000, 1 / 60);
+    return (state.sessionGold || 0) / elapsedMinutes;
+}
+
+function drawRunStatPanel(ctx, W, H, state, barH) {
+    const panelW = Math.min(300, Math.max(240, W * 0.28));
+    const panelH = 126;
+    const panelX = Math.max(12, W - panelW - 14);
+    const panelY = barH + 12;
+
+    ctx.save();
+    ctx.globalAlpha = 0.94;
+    ctx.fillStyle = 'rgba(9, 8, 6, 0.86)';
+    roundRect(ctx, panelX, panelY, panelW, panelH, 10);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = 'rgba(212,160,23,0.65)';
+    ctx.lineWidth = 1.5;
+    roundRect(ctx, panelX, panelY, panelW, panelH, 10);
+    ctx.stroke();
+
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#f0c040';
+    ctx.font = `bold 11px 'Cinzel', serif`;
+    ctx.fillText('RUN STATS', panelX + 12, panelY + 16);
+
+    const now = Date.now();
+    if (!_cachedRunStatRows || _cachedRunStartedAt !== state.runStartedAt || now - _lastRunStatUpdate >= 1000) {
+        const displayWave = Math.min((state.currentWave || 0) + 1, 20);
+        _lastRunStatUpdate = now;
+        _cachedRunStartedAt = state.runStartedAt;
+        _cachedRunStatRows = [
+            ['Party DPS', formatStatNumber(getPartyDps(state))],
+            ['Gold earned', formatGold(state.sessionGold || 0)],
+            ['Gold / min', `${formatStatNumber(getGoldPerMinute(state))}/m`],
+            ['Offline rate', `${formatGold(idleGoldPerHour(state.highestUnlockedLevel || 0))}/hr`],
+            ['Progress', `Lv ${state.currentLevel + 1} • Wave ${displayWave}/20`]
+        ];
+    }
+
+    _cachedRunStatRows.forEach(([label, value], i) => {
+        const y = panelY + 38 + i * 17;
+        ctx.fillStyle = 'rgba(210,196,160,0.72)';
+        ctx.font = `10px 'Crimson Text', serif`;
+        ctx.fillText(label, panelX + 12, y);
+        ctx.fillStyle = '#fff3b0';
+        ctx.font = `bold 11px 'Cinzel', serif`;
+        ctx.textAlign = 'right';
+        ctx.fillText(value, panelX + panelW - 12, y);
+        ctx.textAlign = 'left';
+    });
+    ctx.restore();
 }
 
 // ── HUD ────────────────────────────────────────────────────────────────────
@@ -117,8 +192,10 @@ export function drawHUD(ctx, W, H, state) {
     ctx.fillStyle = '#f0c040';
     ctx.font = `bold ${Math.round(barH * 0.38)}px 'Cinzel', serif`;
     ctx.shadowColor = '#d4a017'; ctx.shadowBlur = 8;
-    ctx.fillText(formatGold(state.gold), goldRight, barH * 0.65);
+    ctx.fillText(formatGold(getDisplayedGold(state)), goldRight, barH * 0.65);
     ctx.shadowBlur = 0;
+
+    drawRunStatPanel(ctx, W, H, state, barH);
 }
 
 function drawCoin(ctx, x, y, r) {
