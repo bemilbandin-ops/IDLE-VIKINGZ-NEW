@@ -6,18 +6,13 @@ import { heroes } from '../data/heroes.js';
 import { rollBossGearDrop, rollGearDrops } from '../data/gear.js';
 import { getW, getH } from './canvas.js';
 import { autoPickRandomSkill, getValidSkillChoices } from './skills.js';
-<<<<<<< HEAD
-=======
 import { HERO_IDS, getHeroDisplayName, grantFirstClearShards, rollRandomShardDrop, normalizeHeroAscensions, normalizeShards, normalizeFirstClearRewards } from './ascension.js';
 import { getExpNeededForPartyLevel } from './progression.js';
->>>>>>> d12e53c (hp bars, more levels etc)
 
 function getCombatTopBorderY(H) {
     const hudH = Math.max(52, H * 0.07);
     return hudH + 10;
 }
-<<<<<<< HEAD
-=======
 
 const BOSS_GOLD_MULTIPLIER = 3;
 const BOSS_EXP_MULTIPLIER = 2;
@@ -41,7 +36,6 @@ function showBossWarning(state, waveNumber) {
     const H = getH();
     addFloatingText(state, W / 2, H * 0.24, 'BOSS APPROACHING', '#ff7a18', -18, { fontSize: 26, fadeRate: 0.35, shadowBlur: 10 });
 }
->>>>>>> d12e53c (hp bars, more levels etc)
 
 export function spawnWave(state, levelData) {
     const levelIndex = state.currentLevel;
@@ -52,11 +46,8 @@ export function spawnWave(state, levelData) {
     const isBossWave = isBossWaveNumber(waveNumber);
     const count = isBossWave ? 1 : 2 + state.currentWave;
 
-<<<<<<< HEAD
-=======
     if (isBossWave) showBossWarning(state, waveNumber);
 
->>>>>>> d12e53c (hp bars, more levels etc)
     const edgePad = Math.max(34, W * 0.045);
     const spawnWidth = W - edgePad * 2;
     const startX = edgePad;
@@ -113,7 +104,6 @@ function buildSkillChoices(state) {
         [pool[i], pool[j]] = [pool[j], pool[i]];
     }
     return getValidSkillChoices(pool.slice(0, 3));
-<<<<<<< HEAD
 }
 
 function triggerSkillChoice(state) {
@@ -134,36 +124,10 @@ function triggerSkillChoice(state) {
     state.skillChoices = choices;
 }
 
-const EXP_PER_LEVEL = 60;
-=======
-}
-
-function triggerSkillChoice(state) {
-    const choices = buildSkillChoices(state);
-
-    if (state.autoPickSkills) {
-        autoPickRandomSkill(state, choices);
-        return;
-    }
-
-    if (choices.length === 0) {
-        state.pendingSkillChoice = false;
-        state.skillChoices = [];
-        return;
-    }
-
-    state.pendingSkillChoice = true;
-    state.skillChoices = choices;
-}
-
->>>>>>> d12e53c (hp bars, more levels etc)
 const BASE_EXP_REWARD_SCALE = 0.6;
 const EXP_GAIN_MULTIPLIER = 1.2;
 
 function getMonsterExpReward(monster) {
-<<<<<<< HEAD
-    return monster.expReward * BASE_EXP_REWARD_SCALE * EXP_GAIN_MULTIPLIER;
-=======
     const bossMultiplier = monster.isBoss ? (monster.bossExpMultiplier || BOSS_EXP_MULTIPLIER) : 1;
     return monster.expReward * BASE_EXP_REWARD_SCALE * EXP_GAIN_MULTIPLIER * bossMultiplier;
 }
@@ -262,7 +226,6 @@ function triggerShatterIfNeeded(state, monster) {
             state.floatingTexts.push({ x: other.x, y: other.y - other.h * 0.5, text: 'SHATTER', color: '#9eefff', vy: -30, alpha: 1 });
         }
     }
->>>>>>> d12e53c (hp bars, more levels etc)
 }
 
 export function updateMonsters(state, dt) {
@@ -302,23 +265,7 @@ export function updateMonsters(state, dt) {
 
             // Check if hero projectiles killed this monster while it was at the barricade
             if (monster.hp <= 0) {
-<<<<<<< HEAD
-                monster.dead = true;
-                recordMonsterDefeated(state);
-                const incomeMult = (1 + (state.permanentUpgrades.astrid.income + state.permanentUpgrades.hilda.income + state.permanentUpgrades.bjorn.income) * 0.05) * getAchievementIncomeMultiplier(state);
-                const goldReward = Math.floor(monster.goldReward * incomeMult);
-                grantGold(state, goldReward);
-                state.sessionGold += goldReward;
-                const scaledExp = getMonsterExpReward(monster);
-                state.party.exp += scaledExp;
-                while (state.party.exp >= EXP_PER_LEVEL) {
-                    state.party.level++;
-                    state.party.exp -= EXP_PER_LEVEL;
-                    triggerSkillChoice(state);
-                }
-=======
                 defeatMonster(state, monster);
->>>>>>> d12e53c (hp bars, more levels etc)
                 return;
             }
 
@@ -343,25 +290,7 @@ export function updateMonsters(state, dt) {
         monster.y += effectiveSpeed * dt;
 
         if (monster.hp <= 0) {
-<<<<<<< HEAD
-            monster.dead = true;
-            recordMonsterDefeated(state);
-            const incomeMult = (1 + (state.permanentUpgrades.astrid.income + state.permanentUpgrades.hilda.income + state.permanentUpgrades.bjorn.income) * 0.05) * getAchievementIncomeMultiplier(state);
-            const goldReward = Math.floor(monster.goldReward * incomeMult);
-            grantGold(state, goldReward);
-            state.sessionGold += goldReward;
-
-            const scaledExp = getMonsterExpReward(monster);
-            state.party.exp += scaledExp;
-
-            while (state.party.exp >= EXP_PER_LEVEL) {
-                state.party.level++;
-                state.party.exp -= EXP_PER_LEVEL;
-                triggerSkillChoice(state);
-            }
-=======
             defeatMonster(state, monster);
->>>>>>> d12e53c (hp bars, more levels etc)
         }
     });
 }
@@ -430,11 +359,7 @@ export function onLevelFailed(state) {
     gearDrops.forEach(g => {
         if (!state.gearInventory.includes(g.id)) state.gearInventory.push(g.id);
     });
-<<<<<<< HEAD
-    state.pendingGearRewards = gearDrops;
-=======
     state.pendingGearRewards = [...(state.pendingGearRewards || []), ...gearDrops];
->>>>>>> d12e53c (hp bars, more levels etc)
     checkAchievements(state);
     saveGameState(state);
 }
@@ -464,10 +389,7 @@ export function loadProgress(state) {
         if (save.achievementRewards) state.achievementRewards = save.achievementRewards;
         checkAchievements(state);
         state.autoPickSkills = save.autoPickSkills === true;
-<<<<<<< HEAD
-=======
         state.gameSpeed = state.autoPickSkills ? 2 : 1;
->>>>>>> d12e53c (hp bars, more levels etc)
 
         // Compute offline gold
         if (save.lastSeen) {

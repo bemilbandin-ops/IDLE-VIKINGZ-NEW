@@ -1,9 +1,6 @@
 import { drawHealthBar, spawnTorchParticle } from './canvas.js';
 import { formatGold, getDisplayedGold, idleGoldPerHour, roundRect } from './utils.js';
-<<<<<<< HEAD
-=======
 import { getExpNeededForPartyLevel } from './progression.js';
->>>>>>> d12e53c (hp bars, more levels etc)
 
 // Torch positions relative to barricade — filled in drawBarricade, used by HUD tick
 let _torchPositions = [];

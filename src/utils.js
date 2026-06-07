@@ -52,11 +52,8 @@ export function saveGameState(state) {
             achievementStats: state.achievementStats || {},
             achievements: state.achievements || { claimed: {}, ready: {} },
             achievementRewards: state.achievementRewards || { incomePercent: 0, offlineGoldPercent: 0 },
-<<<<<<< HEAD
-=======
             heroAscensions: state.heroAscensions || {},
             firstClearShardRewards: state.firstClearShardRewards || {},
->>>>>>> d12e53c (hp bars, more levels etc)
             autoPickSkills: state.autoPickSkills === true,
             lastSeen: Date.now()
         };

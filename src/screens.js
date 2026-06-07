@@ -3,11 +3,8 @@
 import { roundRect, hexToRgb, saveGameState, getShopPanelDims, getHeroUpgradePanelDims, getDisplayedGold } from './utils.js';
 import { applySkillChoice } from './skills.js';
 import { checkAchievements, claimAchievement, getAchievementList } from './achievements.js';
-<<<<<<< HEAD
-=======
 import { ascendHero, canAscendHero, getAscensionCost, getAscensionTier, getNextAscensionTier, getHeroDisplayName } from './ascension.js';
 import { levels } from '../data/levels.js';
->>>>>>> d12e53c (hp bars, more levels etc)
 
 const T = () => Date.now();
 
@@ -88,13 +85,7 @@ export function drawTitleScreen(ctx, W, H, state) {
     drawRuneButton(ctx, btnX, btnY + (btnH + 16) * 2, btnW, btnH, '⚙  GEAR', state.mouse, '#5a3070', '#b07af0');
     drawRuneButton(ctx, btnX, btnY + (btnH + 16) * 3, btnW, btnH, '◈  SHOP', state.mouse, '#8b4513', '#c87820');
 
-<<<<<<< HEAD
-    // Auto skill toggle
-    const toggle = getAutoPickToggleRect(W, H);
-    drawRuneButton(ctx, toggle.x, toggle.y, toggle.w, toggle.h, `Auto Pick Skills: ${state.autoPickSkills ? 'ON' : 'OFF'}`, state.mouse, state.autoPickSkills ? '#1f6b38' : '#5a3310', state.autoPickSkills ? '#58d878' : '#d4a017', false, false);
-=======
     drawAutoPickToggle(ctx, W, H, state);
->>>>>>> d12e53c (hp bars, more levels etc)
 
     const achievementButton = getAchievementsButtonRect(W, H);
     const achievements = getAchievementList(state);
@@ -1224,10 +1215,6 @@ export function handleClick(state, levelIndex, clickX, clickY, W, H) {
                 const portH = colW * 0.55;
                 const upgrades = state.permanentUpgrades[id];
                 const hero = { id, color: ['#c8962a','#4a8fa8','#6b3d11'][i] };
-<<<<<<< HEAD
-                const upgs = HERO_UPGRADE_TYPES;
-=======
->>>>>>> d12e53c (hp bars, more levels etc)
                 const cH = pH * 0.72;
                 const ascendCost = getAscensionCost(state, id);
                 if (ascendCost !== null) {
@@ -1269,12 +1256,7 @@ export function handleClick(state, levelIndex, clickX, clickY, W, H) {
         }
 
         if (inRect(mouse, autoToggle.x, autoToggle.y, autoToggle.w, autoToggle.h)) {
-<<<<<<< HEAD
-            state.autoPickSkills = !state.autoPickSkills;
-            saveGameState(state);
-=======
             toggleAutoPickSkills(state);
->>>>>>> d12e53c (hp bars, more levels etc)
             return { action:'none' };
         }
 
@@ -1351,10 +1333,6 @@ export function handleClick(state, levelIndex, clickX, clickY, W, H) {
 }
 
 // ── Utility ───────────────────────────────────────────────────────────────────
-<<<<<<< HEAD
-function getAutoPickToggleRect(W, H) {
-    return { x: 16, y: Math.max(70, H * 0.12), w: 220, h: 36 };
-=======
 function drawAutoPickToggle(ctx, W, H, state) {
     const toggle = getAutoPickToggleRect(W, H);
     drawRuneButton(
@@ -1376,7 +1354,6 @@ function toggleAutoPickSkills(state) {
 
 function getAutoPickToggleRect(W, H) {
     return { x: 16, y: Math.max(70, H * 0.12), w: 200, h: 36 };
->>>>>>> d12e53c (hp bars, more levels etc)
 }
 
 function getAchievementsButtonRect(W, H) {
