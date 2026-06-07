@@ -94,6 +94,36 @@ function heroSize(W, H) {
   return Math.min(Math.max(42, W * 0.052), Math.max(58, H * 0.105));
 }
 
+function getHeroLevel(hero) {
+  const up = state.permanentUpgrades?.[hero.id];
+  if (!up) return state.party?.level || 1;
+  return 1 + (up.atk || 0) + (up.income || 0) + (up.atkSpeed || 0);
+}
+
+function drawHeroLevelLabel(hero, x, y, size) {
+  const cfg = heroCfg[hero.id] || heroCfg.astrid;
+  const label = `LV ${getHeroLevel(hero)}`;
+  const w = Math.max(58, ctx.measureText(label).width + 26);
+  const h = 22;
+  const ly = y + size * 1.12;
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = 'rgba(0,0,0,.72)';
+  ctx.beginPath();
+  ctx.roundRect(x - w / 2, ly - h / 2, w, h, 8);
+  ctx.fill();
+  ctx.strokeStyle = hero.dead ? 'rgba(90,90,90,.7)' : cfg.glow;
+  ctx.lineWidth = 1.2;
+  ctx.stroke();
+  ctx.font = "bold 12px Cinzel, Georgia, serif";
+  ctx.fillStyle = hero.dead ? '#777' : '#fff3b0';
+  ctx.shadowColor = hero.dead ? '#000' : cfg.glow;
+  ctx.shadowBlur = hero.dead ? 0 : 7;
+  ctx.fillText(label, x, ly + 0.5);
+  ctx.restore();
+}
+
 function observeProjectiles(now) {
   for (const p of state.projectiles || []) {
     if (!p || !p.ownerId || seenProjectiles.has(p.id)) continue;
@@ -182,6 +212,7 @@ function drawHeroSprites(now, W, H) {
     if (a != null) drawAttackFx(hero, hero.x, y, size, a);
     if (u != null) drawUltimateFx(hero, u, W, H);
     drawSvgSprite(ctx, cfg.key, hero.x + dx, y + dy, size * 1.95, size * 1.95, { rotation: (hero.dead ? -.08 : Math.sin(now * .0018 + hero.x) * .015 + (hero.id === 'bjorn' ? wave * .08 : hero.id === 'astrid' ? -wave * .05 : 0)), bob: hero.dead ? 0 : Math.sin(now * .003 + hero.x) * 1.8, shadowColor: hero.dead ? '#333' : cfg.glow, shadowBlur: hero.dead ? 0 : 12 + wave * 14 + (u != null ? 16 : 0), alpha: hero.dead ? .35 : 1, fallbackColor: cfg.glow });
+    drawHeroLevelLabel(hero, hero.x + dx, y + dy, size);
   }
 }
 
