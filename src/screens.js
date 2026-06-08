@@ -196,6 +196,7 @@ export function drawCombatOverlays(ctx, W, H, state) {
     drawRuneButton(ctx, qX, qY, qW, qH, '✕ QUIT', state.mouse, '#6a1010', '#ff4444', false, true);
 
     drawAutoPickToggle(ctx, W, H, state);
+    drawClearTimerPanel(ctx, W, H, state);
 
     // Wave cleared banner
     if (state.waveTransitioning && !state.levelComplete) {
@@ -1339,6 +1340,51 @@ function drawAutoPickToggle(ctx, W, H, state) {
         state.autoPickSkills,
         false
     );
+}
+
+
+function formatClearTimer(seconds) {
+    const safeSeconds = Math.max(0, Math.floor(seconds || 0));
+    const mins = Math.floor(safeSeconds / 60);
+    const secs = safeSeconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+function drawClearTimerPanel(ctx, W, H, state) {
+    const toggle = getAutoPickToggleRect(W, H);
+    const timerX = toggle.x;
+    const timerY = toggle.y + toggle.h + 8;
+    const timerW = 200;
+    const timerH = 44;
+    const speedLabel = state.autoPickSkills ? '2x speed' : '1x speed';
+
+    ctx.save();
+    ctx.globalAlpha = 0.94;
+    ctx.fillStyle = 'rgba(9, 8, 6, 0.86)';
+    roundRect(ctx, timerX, timerY, timerW, timerH, 10);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = state.autoPickSkills ? 'rgba(88,216,120,0.72)' : 'rgba(212,160,23,0.62)';
+    ctx.lineWidth = 1.5;
+    roundRect(ctx, timerX, timerY, timerW, timerH, 10);
+    ctx.stroke();
+
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = 'rgba(210,196,160,0.72)';
+    ctx.font = `10px 'Cinzel', serif`;
+    ctx.fillText('CLEAR TIMER', timerX + 12, timerY + 14);
+
+    ctx.fillStyle = '#fff3b0';
+    ctx.font = `bold 16px 'Cinzel', serif`;
+    ctx.fillText(formatClearTimer(state.combatElapsedSeconds || 0), timerX + 12, timerY + 31);
+
+    ctx.textAlign = 'right';
+    ctx.fillStyle = state.autoPickSkills ? '#58d878' : 'rgba(210,196,160,0.65)';
+    ctx.font = `bold 10px 'Cinzel', serif`;
+    ctx.fillText(speedLabel, timerX + timerW - 12, timerY + 31);
+    ctx.restore();
 }
 
 function toggleAutoPickSkills(state) {
