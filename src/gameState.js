@@ -33,6 +33,7 @@ export const state = {
     pendingGearRewards: [],
     sessionGold: 0,
     runStartedAt: 0,
+    combatElapsedSeconds: 0,
     debugMode: false,
     mouse: { x: 0, y: 0 },
     highestUnlockedLevel: 0,
@@ -94,6 +95,7 @@ export function resetLevelState(state, levelIndex, W, H) {
     state.pendingGearRewards = [];
     state.pendingShardRewards = [];
     state.levelCompletedShardHero = null;
+    state.combatElapsedSeconds = 0;
 
     const heroSize = Math.min(H * 0.12, 80);
     const heroSpacing = Math.min(Math.max(heroSize * 2.25, W * 0.20), W * 0.29);

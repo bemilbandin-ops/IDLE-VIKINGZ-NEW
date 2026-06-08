@@ -42,15 +42,25 @@ function getPartyDps(state) {
     }, 0);
 }
 
+function getCombatElapsedSeconds(state) {
+    return Math.max(state.combatElapsedSeconds || 0, 0);
+}
+
+function formatRunTime(seconds) {
+    const safeSeconds = Math.max(0, Math.floor(seconds || 0));
+    const mins = Math.floor(safeSeconds / 60);
+    const secs = safeSeconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
 function getGoldPerMinute(state) {
-    if (!state.runStartedAt) return 0;
-    const elapsedMinutes = Math.max((Date.now() - state.runStartedAt) / 60000, 1 / 60);
+    const elapsedMinutes = Math.max(getCombatElapsedSeconds(state) / 60, 1 / 60);
     return (state.sessionGold || 0) / elapsedMinutes;
 }
 
 function drawRunStatPanel(ctx, W, H, state, barH) {
     const panelW = Math.min(300, Math.max(240, W * 0.28));
-    const panelH = 126;
+    const panelH = 142;
     const panelX = Math.max(12, W - panelW - 14);
     const panelY = barH + 12;
 
@@ -74,6 +84,7 @@ function drawRunStatPanel(ctx, W, H, state, barH) {
 
     const displayWave = Math.min((state.currentWave || 0) + 1, 20);
     const rows = [
+        ['Clear timer', formatRunTime(getCombatElapsedSeconds(state))],
         ['Party DPS', formatStatNumber(getPartyDps(state))],
         ['Gold earned', formatGold(state.sessionGold || 0)],
         ['Gold / min', `${formatStatNumber(getGoldPerMinute(state))}/m`],
