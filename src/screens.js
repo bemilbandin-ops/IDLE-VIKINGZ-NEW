@@ -395,8 +395,8 @@ function drawShopOverlay(ctx, W, H, state) {
     // Title
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.font = `bold ${Math.round(pH * 0.07)}px 'Cinzel', serif`;
-    ctx.fillStyle = '#f0c040';
-    ctx.shadowColor = '#d4a017'; ctx.shadowBlur = 10;
+    ctx.fillStyle = WAR.bronzeBright;
+    ctx.shadowColor = WAR.ember; ctx.shadowBlur = 10;
     ctx.fillText('THE SHOP', W / 2, pY + pH * 0.09);
     ctx.shadowBlur = 0;
 
@@ -443,6 +443,51 @@ function drawShopOverlay(ctx, W, H, state) {
 }
 
 // ── Hero Upgrade Overlay ──────────────────────────────────────────────────────
+function drawHeroSigil(ctx, heroId, x, y, size, color) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.strokeStyle = color;
+    ctx.fillStyle = `rgba(${hexToRgb(color)},0.14)`;
+    ctx.lineWidth = Math.max(2, size * 0.08);
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.arc(0, 0, size * 0.42, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    if (heroId === 'astrid') {
+        ctx.beginPath();
+        ctx.arc(-size * .08, 0, size * .30, -Math.PI * .58, Math.PI * .58);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(size * .20, -size * .33);
+        ctx.lineTo(size * .20, size * .33);
+        ctx.moveTo(size * .06, 0);
+        ctx.lineTo(size * .38, 0);
+        ctx.stroke();
+    } else if (heroId === 'hilda') {
+        for (let i = 0; i < 6; i++) {
+            const a = i * Math.PI / 3;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(Math.cos(a) * size * .32, Math.sin(a) * size * .32);
+            ctx.stroke();
+        }
+    } else {
+        ctx.beginPath();
+        ctx.moveTo(-size * .16, -size * .33);
+        ctx.lineTo(size * .16, -size * .02);
+        ctx.lineTo(-size * .02, -size * .02);
+        ctx.lineTo(size * .16, size * .33);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(-size * .30, size * .16);
+        ctx.lineTo(size * .30, size * .16);
+        ctx.stroke();
+    }
+    ctx.restore();
+}
+
 function drawHeroUpgradeOverlay(ctx, W, H, state) {
     drawModalBg(ctx, W, H, '#7ec8e3');
 
@@ -452,8 +497,8 @@ function drawHeroUpgradeOverlay(ctx, W, H, state) {
 
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.font = `bold ${Math.round(pH * 0.065)}px 'Cinzel', serif`;
-    ctx.fillStyle = '#7ec8e3';
-    ctx.shadowColor = '#7ec8e3'; ctx.shadowBlur = 12;
+    ctx.fillStyle = WAR.frost;
+    ctx.shadowColor = WAR.frost; ctx.shadowBlur = 12;
     ctx.fillText('HERO UPGRADES', W / 2, pY + pH * 0.08);
     ctx.shadowBlur = 0;
 
@@ -483,9 +528,8 @@ function drawHeroUpgradeOverlay(ctx, W, H, state) {
         const portH = colW * 0.55;
         ctx.fillStyle = `rgba(${hexToRgb(hero.color)},0.18)`;
         roundRect(ctx, cX + 10, cY + 10, colW - 20, portH, 6); ctx.fill();
-        ctx.font = `${portH * 0.55}px serif`;
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText(hero.emoji, cX + colW / 2, cY + 10 + portH / 2);
+        drawHeroSigil(ctx, hero.id, cX + colW / 2, cY + 10 + portH / 2, portH * 0.76, hero.glow);
 
         ctx.font = `bold 14px 'Cinzel', serif`;
         ctx.fillStyle = hero.color;
@@ -573,7 +617,7 @@ function drawGearOverlay(ctx, W, H, state) {
 
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.font = `bold ${Math.round(pH * 0.065)}px 'Cinzel', serif`;
-    ctx.fillStyle = '#b07af0'; ctx.shadowColor = '#b07af0'; ctx.shadowBlur = 12;
+    ctx.fillStyle = '#b07af0'; ctx.shadowColor = WAR.shadow; ctx.shadowBlur = 12;
     ctx.fillText('GEAR', W / 2, pY + pH * 0.07);
     ctx.shadowBlur = 0;
 
@@ -717,7 +761,7 @@ function drawAchievementsOverlay(ctx, W, H, state) {
 
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.font = `bold ${Math.round(pH * 0.06)}px 'Cinzel', serif`;
-    ctx.fillStyle = '#f0c040'; ctx.shadowColor = '#f0c040'; ctx.shadowBlur = 12;
+    ctx.fillStyle = WAR.bronzeBright; ctx.shadowColor = WAR.ember; ctx.shadowBlur = 12;
     ctx.fillText('ACHIEVEMENTS', W / 2, pY + pH * 0.07);
     ctx.shadowBlur = 0;
 
@@ -922,6 +966,29 @@ function drawRuneCircle(ctx, cx, cy, r, t) {
     }
 }
 
+function drawLevelMark(ctx, x, y, r, color, locked) {
+    ctx.save();
+    ctx.strokeStyle = locked ? '#444' : color;
+    ctx.fillStyle = locked ? '#1a1714' : 'rgba(180,122,45,0.12)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x, y - r);
+    ctx.lineTo(x + r * .82, y - r * .28);
+    ctx.lineTo(x + r * .52, y + r * .82);
+    ctx.lineTo(x - r * .52, y + r * .82);
+    ctx.lineTo(x - r * .82, y - r * .28);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x - r * .42, y + r * .05);
+    ctx.lineTo(x + r * .42, y + r * .05);
+    ctx.moveTo(x, y - r * .42);
+    ctx.lineTo(x, y + r * .5);
+    ctx.stroke();
+    ctx.restore();
+}
+
 function drawLevelCard(ctx, x, y, w, h, lvl, locked, hovered, t) {
     ctx.save();
 
@@ -931,26 +998,7 @@ function drawLevelCard(ctx, x, y, w, h, lvl, locked, hovered, t) {
         ctx.shadowColor = lvl.glow; ctx.shadowBlur = 30;
     }
 
-    // Shadow
-    ctx.fillStyle = 'rgba(0,0,0,0.5)';
-    roundRect(ctx, x+3, y+5, w, h, 8); ctx.fill(); ctx.shadowBlur = 0;
-
-    // Card body
-    const bg = ctx.createLinearGradient(x, y, x, y + h);
-    if (locked) {
-        bg.addColorStop(0, '#111');
-        bg.addColorStop(1, '#080808');
-    } else {
-        bg.addColorStop(0, '#1a1510');
-        bg.addColorStop(1, '#0e0a06');
-    }
-    ctx.fillStyle = bg;
-    roundRect(ctx, x, y, w, h, 8); ctx.fill();
-
-    // Border
-    ctx.strokeStyle = locked ? '#333' : (hovered ? lvl.glow : lvl.color + '88');
-    ctx.lineWidth = locked ? 1 : (hovered ? 2 : 1.5);
-    roundRect(ctx, x, y, w, h, 8); ctx.stroke();
+    drawPanel(ctx, x, y, w, h, locked ? '#333' : (hovered ? lvl.glow : lvl.color + 'aa'));
 
     if (!locked) {
         // Top color accent band
@@ -979,13 +1027,11 @@ function drawLevelCard(ctx, x, y, w, h, lvl, locked, hovered, t) {
         ctx.font = `14px 'Cinzel', serif`;
         ctx.fillText('LOCKED', x + w/2, y + h*0.72);
     } else {
-        // Icon
-        ctx.font = `${h * 0.24}px serif`;
-        ctx.fillText(lvl.icon, x + w/2, y + h * 0.22);
+        drawLevelMark(ctx, x + w/2, y + h * 0.22, Math.min(w, h) * 0.11, hovered ? lvl.glow : lvl.color, locked);
 
         // Name
         ctx.font = `bold ${Math.min(16, w * 0.11)}px 'Cinzel', serif`;
-        ctx.fillStyle = hovered ? '#fff' : '#ddd';
+        ctx.fillStyle = hovered ? '#fff4d0' : WAR.text;
         if (hovered) { ctx.shadowColor = lvl.glow; ctx.shadowBlur = 8; }
 
         // Word wrap name
@@ -1089,12 +1135,12 @@ function drawSkillChoicePopup(ctx, W, H, state) {
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     const titleSize = Math.min(Math.round(panelH * 0.09), 38);
     ctx.font = `bold ${titleSize}px 'Cinzel', serif`;
-    ctx.fillStyle = '#f0c040'; ctx.shadowColor = '#d4a017'; ctx.shadowBlur = 16;
+    ctx.fillStyle = WAR.bronzeBright; ctx.shadowColor = WAR.ember; ctx.shadowBlur = 16;
     ctx.fillText('LEVEL UP!', W / 2, panelY + panelH * 0.09);
     ctx.shadowBlur = 0;
     const subSize = Math.min(Math.round(panelH * 0.048), 20);
     ctx.font = `${subSize}px 'Crimson Text', serif`;
-    ctx.fillStyle = 'rgba(200,180,120,0.85)';
+    ctx.fillStyle = WAR.muted;
     ctx.fillText(`Party Level ${state.party.level} \u2014 Choose a Skill`, W / 2, panelY + panelH * 0.17);
 
     state.skillChoices.forEach((skill, i) => {
@@ -1126,11 +1172,8 @@ function drawSkillChoicePopup(ctx, W, H, state) {
         ctx.fillStyle = accentBar; roundRect(ctx, cardX, cardY, cardW, 3, 2); ctx.fill();
 
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        const iconSize = Math.min(Math.round(cardH * 0.13), 32);
-        ctx.font = `${iconSize}px serif`;
         ctx.globalAlpha = hovered ? 1 : 0.75;
-        const iconEmoji = heroId === 'astrid' ? '\u{1F3F9}' : heroId === 'hilda' ? '\u2744\uFE0F' : '\u26A1';
-        ctx.fillText(iconEmoji, cx, cardY + cardH * 0.105);
+        drawHeroSigil(ctx, heroId, cx, cardY + cardH * 0.105, Math.min(cardH * 0.18, 44), glow);
         ctx.globalAlpha = 1;
 
         ctx.font = `bold ${Math.min(Math.round(cardH * 0.044), 12)}px 'Cinzel', serif`;
