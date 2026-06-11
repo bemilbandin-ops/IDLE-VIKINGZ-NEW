@@ -122,13 +122,13 @@ function drawMountains(W, H) {
 
 // ── Grid scan bg ───────────────────────────────────────────────────────────
 function drawGrid(W, H, t) {
-    ctx.strokeStyle='rgba(40,60,120,0.10)'; ctx.lineWidth=1;
+    ctx.strokeStyle='rgba(40,60,120,0.045)'; ctx.lineWidth=1;
     const gs=80;
     for(let x=0;x<W;x+=gs){ctx.beginPath();ctx.moveTo(x,H*0.70);ctx.lineTo(x,H);ctx.stroke();}
     for(let y=H*0.70;y<H;y+=gs/2){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
     const scanY=H*0.70+(t*50)%(H*0.30);
     const sg=ctx.createLinearGradient(0,scanY-20,0,scanY+20);
-    sg.addColorStop(0,'rgba(60,120,255,0)'); sg.addColorStop(0.5,'rgba(60,120,255,0.025)'); sg.addColorStop(1,'rgba(60,120,255,0)');
+    sg.addColorStop(0,'rgba(60,120,255,0)'); sg.addColorStop(0.5,'rgba(60,120,255,0.012)'); sg.addColorStop(1,'rgba(60,120,255,0)');
     ctx.fillStyle=sg; ctx.fillRect(0,scanY-20,W,40);
 }
 
@@ -173,7 +173,7 @@ function updateDrawTorches(dt){
 // ── Hit particles ──────────────────────────────────────────────────────────
 const hitParticles=[];
 export function spawnHitParticles(x,y,color='#ff6600'){
-    for(let i=0;i<12;i++){
+    for(let i=0;i<9;i++){
         const a=Math.random()*Math.PI*2, s=80+Math.random()*150;
         hitParticles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-60,life:0.6+Math.random()*0.5,size:3+Math.random()*5,color});
     }

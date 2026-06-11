@@ -137,19 +137,23 @@ export function drawTitleScreen(ctx, W, H, state) {
 // ── Level Select ──────────────────────────────────────────────────────────────
 export function drawLevelSelectScreen(ctx, W, H, state) {
     const t = T();
+    const compact = W < 640;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
 
     // Title
     ctx.fillStyle = '#f0c040';
-    ctx.font = `bold ${Math.round(H * 0.05)}px 'Cinzel', serif`;
+    const titleSize = Math.min(Math.round(H * 0.05), compact ? Math.round(W * 0.07) : 44);
+    const titleY = compact ? H * 0.095 : H * 0.12;
+    const lineY = compact ? H * 0.17 : H * 0.17;
+    ctx.font = `bold ${titleSize}px 'Cinzel', serif`;
     ctx.shadowColor = '#d4a017'; ctx.shadowBlur = 14;
-    ctx.fillText('CHOOSE YOUR BATTLE', W / 2, H * 0.12);
+    ctx.fillText('CHOOSE YOUR BATTLE', W / 2, titleY);
     ctx.shadowBlur = 0;
 
     // Decorative line
-    const dl = W * 0.5;
+    const dl = compact ? W * 0.70 : W * 0.5;
     ctx.strokeStyle = 'rgba(212,160,23,0.4)'; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(W/2 - dl/2, H * 0.17); ctx.lineTo(W/2 + dl/2, H * 0.17); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(W/2 - dl/2, lineY); ctx.lineTo(W/2 + dl/2, lineY); ctx.stroke();
 
     drawAutoPickToggle(ctx, W, H, state);
 
@@ -215,7 +219,7 @@ export function drawCombatOverlays(ctx, W, H, state) {
     const qY = (barH - qH) / 2;
     drawRuneButton(ctx, qX, qY, qW, qH, '✕ QUIT', state.mouse, '#6a1010', '#ff4444', false, true);
 
-    drawAutoPickToggle(ctx, W, H, state);
+    if (W >= 640) drawAutoPickToggle(ctx, W, H, state);
 
     // Wave cleared banner
     if (state.waveTransitioning && !state.levelComplete) {
@@ -1345,7 +1349,7 @@ export function handleClick(state, levelIndex, clickX, clickY, W, H) {
 
     if (state.screen === 'combat') {
         const autoToggle = getAutoPickToggleRect(W, H);
-        if (!state.levelComplete && !state.levelFailed && inRect(mouse, autoToggle.x, autoToggle.y, autoToggle.w, autoToggle.h)) {
+        if (W >= 640 && !state.levelComplete && !state.levelFailed && inRect(mouse, autoToggle.x, autoToggle.y, autoToggle.w, autoToggle.h)) {
             toggleAutoPickSkills(state);
             return { action:'none' };
         }
@@ -1387,9 +1391,10 @@ export function handleClick(state, levelIndex, clickX, clickY, W, H) {
 // ── Utility ───────────────────────────────────────────────────────────────────
 function drawAutoPickToggle(ctx, W, H, state) {
     const toggle = getAutoPickToggleRect(W, H);
+    const compact = W < 640;
     drawRuneButton(
         ctx, toggle.x, toggle.y, toggle.w, toggle.h,
-        `Auto Skills + 2x: ${state.autoPickSkills ? 'ON' : 'OFF'}`,
+        compact ? `Auto: ${state.autoPickSkills ? 'ON' : 'OFF'}` : `Auto Skills + 2x: ${state.autoPickSkills ? 'ON' : 'OFF'}`,
         state.mouse,
         state.autoPickSkills ? '#1f6b38' : '#5a3310',
         state.autoPickSkills ? '#58d878' : '#d4a017',
@@ -1405,7 +1410,7 @@ function toggleAutoPickSkills(state) {
 }
 
 function getAutoPickToggleRect(W, H) {
-    return { x: 16, y: Math.max(70, H * 0.12), w: 200, h: 36 };
+    return { x: 16, y: Math.max(70, H * 0.12), w: W < 640 ? 150 : 200, h: 36 };
 }
 
 function getAchievementsButtonRect(W, H) {

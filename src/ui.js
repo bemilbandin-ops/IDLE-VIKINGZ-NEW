@@ -100,6 +100,8 @@ function drawSmallLabel(ctx, text, x, y, align = 'left') {
 }
 
 function drawRunStatPanel(ctx, W, H, state, barH) {
+    if (W < 640) return;
+
     const panelW = Math.min(300, Math.max(240, W * 0.28));
     const panelH = 126;
     const panelX = Math.max(12, W - panelW - 14);
@@ -140,7 +142,8 @@ function drawRunStatPanel(ctx, W, H, state, barH) {
 
 // ── HUD ────────────────────────────────────────────────────────────────────
 export function drawHUD(ctx, W, H, state) {
-    const barH = Math.max(52, H * 0.07);
+    const compact = W < 640;
+    const barH = compact ? Math.max(56, H * 0.066) : Math.max(52, H * 0.07);
 
     // Engraved stone background
     ctx.save();
@@ -155,8 +158,8 @@ export function drawHUD(ctx, W, H, state) {
     ctx.beginPath(); ctx.moveTo(0, barH - 2); ctx.lineTo(W, barH - 2); ctx.stroke();
 
     // Rune dividers
-    drawIronDivider(ctx, W * 0.32, 9, W * 0.32, barH - 10);
-    drawIronDivider(ctx, W * 0.62, 9, W * 0.62, barH - 10);
+    drawIronDivider(ctx, compact ? W * 0.30 : W * 0.32, 9, compact ? W * 0.30 : W * 0.32, barH - 10);
+    drawIronDivider(ctx, compact ? W * 0.58 : W * 0.62, 9, compact ? W * 0.58 : W * 0.62, barH - 10);
 
     // ─ Left: Wave info
     const displayWave = Math.min(state.currentWave + 1, 20);
@@ -177,7 +180,7 @@ export function drawHUD(ctx, W, H, state) {
 
     // Wave progress bar (thin, under wave text)
     const wPct = displayWave / 20;
-    const wBarX = W * 0.03, wBarY = barH - 7, wBarW = W * 0.28, wBarH = 3;
+    const wBarX = W * 0.03, wBarY = barH - 7, wBarW = W * (compact ? 0.24 : 0.28), wBarH = 3;
     ctx.fillStyle = '#0b0705';
     ctx.fillRect(wBarX, wBarY, wBarW, wBarH);
     const wGrad = ctx.createLinearGradient(wBarX, 0, wBarX + wBarW, 0);
@@ -187,36 +190,38 @@ export function drawHUD(ctx, W, H, state) {
     ctx.fillRect(wBarX, wBarY, wBarW * wPct, wBarH);
 
     // ─ Center: Party level + XP
+    const partyX = compact ? W * 0.44 : W / 2;
     ctx.textAlign = 'center';
-    drawSmallLabel(ctx, 'PARTY LEVEL', W / 2, barH * 0.25, 'center');
+    drawSmallLabel(ctx, compact ? 'LVL' : 'PARTY LEVEL', partyX, barH * 0.25, 'center');
 
     ctx.fillStyle = WAR_UI.text;
-    ctx.font = `bold ${Math.round(barH * 0.42)}px 'Cinzel', serif`;
+    ctx.font = `bold ${Math.round(barH * (compact ? 0.38 : 0.42))}px 'Cinzel', serif`;
     ctx.shadowColor = WAR_UI.bronze; ctx.shadowBlur = 8;
-    ctx.fillText(`${state.party.level}`, W / 2, barH * 0.62);
+    ctx.fillText(`${state.party.level}`, partyX, barH * 0.62);
     ctx.shadowBlur = 0;
 
     // XP bar
     const xpNeeded = getExpNeededForPartyLevel(state.party.level);
     const xpPct = Math.min(1, state.party.exp / xpNeeded);
-    const xBarX = W / 2 - W * 0.1, xBarY = barH - 7, xBarW = W * 0.2;
+    const xBarW = W * (compact ? 0.13 : 0.2);
+    const xBarX = partyX - xBarW / 2, xBarY = barH - 7;
     ctx.fillStyle = '#0b0705';
     ctx.fillRect(xBarX, xBarY, xBarW, 3);
     ctx.fillStyle = WAR_UI.frost;
     ctx.fillRect(xBarX, xBarY, xBarW * xpPct, 3);
 
     // ─ Right: Gold, kept left of the Quit button
-    const goldRight = Math.min(W * 0.76, W - 132);
+    const goldRight = compact ? W - 112 : Math.min(W * 0.76, W - 132);
     ctx.textAlign = 'right';
     drawSmallLabel(ctx, 'GOLD', goldRight, barH * 0.25, 'right');
 
     // Coin icon
-    const coinX = goldRight - 48;
+    const coinX = goldRight - (compact ? 36 : 48);
     const coinY = barH * 0.62;
-    drawCoin(ctx, coinX, coinY, 10);
+    drawCoin(ctx, coinX, coinY, compact ? 9 : 10);
 
     ctx.fillStyle = WAR_UI.bronzeBright;
-    ctx.font = `bold ${Math.round(barH * 0.38)}px 'Cinzel', serif`;
+    ctx.font = `bold ${Math.round(barH * (compact ? 0.34 : 0.38))}px 'Cinzel', serif`;
     ctx.shadowColor = WAR_UI.ember; ctx.shadowBlur = 7;
     ctx.fillText(formatGold(getDisplayedGold(state)), goldRight, barH * 0.65);
     ctx.shadowBlur = 0;
