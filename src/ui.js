@@ -9,6 +9,23 @@ let _lastRunStatUpdate = 0;
 let _cachedRunStatRows = null;
 let _cachedRunStartedAt = 0;
 
+const WAR_UI = {
+    panel: '#17110c',
+    panel2: '#24180f',
+    timber: '#3a2414',
+    timber2: '#5b351c',
+    iron: '#6f7780',
+    bronze: '#b47a2d',
+    bronzeBright: '#e2ad54',
+    text: '#f0dfba',
+    muted: '#9e8c70',
+    ember: '#df6a26',
+    frost: '#7fb7c7',
+    hpGood: '#5fb15b',
+    hpWarn: '#d69a35',
+    hpBad: '#b83a2c'
+};
+
 // Returns the Y coordinate of the top of the hero panel — the visual "front line" of heroes.
 // Projectiles should spawn here, not at hero.y (which is a game-logic coord with no sprite).
 export function getHeroPanelY(H) {

@@ -15,6 +15,25 @@ const HERO_UPGRADE_TYPES = [
 ];
 const HERO_UPGRADE_BONUS_STEP = 5;
 
+const WAR = {
+    bg: '#080706',
+    panel: '#17110c',
+    panel2: '#24180f',
+    timber: '#3a2414',
+    timber2: '#5b351c',
+    iron: '#6f7780',
+    ironDark: '#24282c',
+    bronze: '#b47a2d',
+    bronzeBright: '#e2ad54',
+    parchment: '#d8c39a',
+    text: '#f0dfba',
+    muted: '#9e8c70',
+    ember: '#df6a26',
+    danger: '#b83a2c',
+    frost: '#7fb7c7',
+    shadow: 'rgba(0,0,0,0.72)'
+};
+
 function getUpgradeBonusText(level, bonusLabel) {
     return `+${level * HERO_UPGRADE_BONUS_STEP}% ${bonusLabel}`;
 }
