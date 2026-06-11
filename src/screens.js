@@ -98,6 +98,7 @@ export function drawTitleScreen(ctx, W, H, state) {
     const btnW = 240, btnH = 52;
     const btnX = W / 2 - btnW / 2;
     const btnY = H * 0.60;
+    drawPanel(ctx, W / 2 - 180, H * 0.56, 360, 300, WAR.bronze);
 
     drawRuneButton(ctx, btnX, btnY, btnW, btnH, '⚔  ENTER BATTLE', state.mouse, '#d4a017', '#f0c040', true);
     drawRuneButton(ctx, btnX, btnY + btnH + 16, btnW, btnH, '✦  HERO UPGRADES', state.mouse, '#4a8fa8', '#7ec8e3');
@@ -121,10 +122,10 @@ export function drawTitleScreen(ctx, W, H, state) {
     }
 
     // Version
-    ctx.fillStyle = 'rgba(100,90,70,0.6)';
-    ctx.font = `11px 'Crimson Text', serif`;
+    ctx.fillStyle = 'rgba(158,140,112,0.7)';
+    ctx.font = `11px 'Cinzel', serif`;
     ctx.textAlign = 'left';
-    ctx.fillText('v1.0 — VIKINGFALL', 16, H - 16);
+    ctx.fillText('VIKINGFALL', 16, H - 16);
 
     // Overlays
     if (state.shopOpen) drawShopOverlay(ctx, W, H, state);
@@ -800,49 +801,55 @@ function handleAchievementsOverlayClick(state, mouse, W, H) {
 
 function drawRuneButton(ctx, x, y, w, h, label, mouse, bgColor, borderColor, primary = false, muted = false) {
     const isHov = mouse && mouse.x >= x && mouse.x <= x + w && mouse.y >= y && mouse.y <= y + h;
-
+    let displayLabel = label;
+    if (typeof displayLabel === 'string') {
+        if (displayLabel.includes('ENTER BATTLE')) displayLabel = 'ENTER BATTLE';
+        else if (displayLabel.includes('HERO UPGRADES')) displayLabel = 'HERO UPGRADES';
+        else if (displayLabel.includes('GEAR')) displayLabel = 'GEAR';
+        else if (displayLabel.includes('SHOP')) displayLabel = 'SHOP';
+        else if (displayLabel.includes('ACHIEVEMENTS')) displayLabel = displayLabel.replace(/^.*ACHIEVEMENTS/, 'ACHIEVEMENTS');
+    }
     ctx.save();
 
-    // Shadow
-    ctx.fillStyle = 'rgba(0,0,0,0.5)';
-    roundRect(ctx, x + 2, y + 3, w, h, 5); ctx.fill();
+    ctx.fillStyle = 'rgba(0,0,0,0.62)';
+    roundRect(ctx, x + 3, y + 4, w, h, 6);
+    ctx.fill();
 
-    // Body
-    const bodyAlpha = muted ? 0.4 : isHov ? 0.85 : 0.65;
-    if (primary && isHov) {
-        const g = ctx.createLinearGradient(x, y, x, y + h);
-        g.addColorStop(0, `rgba(${hexToRgb(borderColor)},0.45)`);
-        g.addColorStop(1, `rgba(${hexToRgb(bgColor)},0.7)`);
-        ctx.fillStyle = g;
-    } else {
-        ctx.fillStyle = bgColor + (muted ? '40' : isHov ? 'aa' : '60');
-    }
-    roundRect(ctx, x, y, w, h, 5); ctx.fill();
+    const bg = ctx.createLinearGradient(x, y, x, y + h);
+    bg.addColorStop(0, muted ? '#151412' : isHov ? WAR.timber2 : WAR.timber);
+    bg.addColorStop(.52, muted ? '#11100e' : WAR.panel2);
+    bg.addColorStop(1, muted ? '#090807' : WAR.panel);
+    ctx.fillStyle = bg;
+    roundRect(ctx, x, y, w, h, 6);
+    ctx.fill();
 
-    // Border
-    ctx.strokeStyle = muted ? '#444' : borderColor + (isHov ? 'ff' : '99');
-    ctx.lineWidth = isHov ? 1.5 : 1;
-    if (isHov && !muted) { ctx.shadowColor = borderColor; ctx.shadowBlur = 10; }
-    roundRect(ctx, x, y, w, h, 5); ctx.stroke();
+    ctx.strokeStyle = 'rgba(0,0,0,0.82)';
+    ctx.lineWidth = 3;
+    roundRect(ctx, x + 1.5, y + 1.5, w - 3, h - 3, 4);
+    ctx.stroke();
+
+    const accent = muted ? WAR.iron : (primary ? WAR.bronzeBright : borderColor || WAR.bronze);
+    ctx.strokeStyle = muted ? '#45484a' : `${accent}${isHov ? 'ff' : 'bb'}`;
+    ctx.lineWidth = isHov ? 2 : 1.25;
+    if (isHov && !muted) { ctx.shadowColor = accent; ctx.shadowBlur = primary ? 14 : 9; }
+    roundRect(ctx, x, y, w, h, 6);
+    ctx.stroke();
     ctx.shadowBlur = 0;
 
-    // Rune corner marks
     if (!muted) {
-        const c = borderColor;
-        const sz = 4;
-        ctx.fillStyle = c + 'cc';
+        const sz = 5;
+        ctx.fillStyle = `${accent}cc`;
         [[x+3,y+3],[x+w-7,y+3],[x+3,y+h-7],[x+w-7,y+h-7]].forEach(([px,py]) => {
             ctx.fillRect(px, py, sz, 1);
             ctx.fillRect(px, py, 1, sz);
         });
     }
 
-    // Label
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.font = `${primary ? 'bold ' : ''}${Math.min(15, h * 0.34)}px 'Cinzel', serif`;
-    ctx.fillStyle = muted ? '#666' : isHov ? '#fff' : '#e8d8a8';
-    if (isHov && !muted) { ctx.shadowColor = borderColor; ctx.shadowBlur = 6; }
-    ctx.fillText(label, x + w / 2, y + h / 2);
+    ctx.fillStyle = muted ? '#666' : isHov ? '#fff4d0' : WAR.text;
+    if (isHov && !muted) { ctx.shadowColor = accent; ctx.shadowBlur = 6; }
+    ctx.fillText(displayLabel, x + w / 2, y + h / 2);
     ctx.shadowBlur = 0;
 
     ctx.restore();
@@ -851,46 +858,34 @@ function drawRuneButton(ctx, x, y, w, h, label, mouse, bgColor, borderColor, pri
 export { drawRuneButton as drawButton };
 
 function drawPanel(ctx, x, y, w, h, accentColor) {
-    // Shadow
-    ctx.fillStyle = 'rgba(0,0,0,0.6)';
-    roundRect(ctx, x + 4, y + 5, w, h, 10); ctx.fill();
-
-    // Body
     const bg = ctx.createLinearGradient(x, y, x, y + h);
-    bg.addColorStop(0, '#18130c');
-    bg.addColorStop(1, '#0c0a06');
+    bg.addColorStop(0, WAR.panel2);
+    bg.addColorStop(.5, WAR.panel);
+    bg.addColorStop(1, '#0b0806');
     ctx.fillStyle = bg;
-    roundRect(ctx, x, y, w, h, 10); ctx.fill();
+    roundRect(ctx, x, y, w, h, 8);
+    ctx.fill();
 
-    // Border
-    ctx.strokeStyle = accentColor + '66';
-    ctx.lineWidth = 1.5;
-    roundRect(ctx, x, y, w, h, 10); ctx.stroke();
-
-    // Inner glow border
-    ctx.strokeStyle = accentColor + '22';
+    ctx.strokeStyle = 'rgba(0,0,0,0.8)';
     ctx.lineWidth = 4;
-    roundRect(ctx, x + 3, y + 3, w - 6, h - 6, 8); ctx.stroke();
+    roundRect(ctx, x + 2, y + 2, w - 4, h - 4, 6);
+    ctx.stroke();
 
-    // Corner ornaments
-    const orn = 20;
-    ctx.strokeStyle = accentColor + 'aa'; ctx.lineWidth = 1.5;
-    [[x,y],[x+w,y],[x,y+h],[x+w,y+h]].forEach(([cx,cy], i) => {
-        const sx = i % 2 === 0 ? 1 : -1;
-        const sy = i < 2 ? 1 : -1;
-        ctx.beginPath(); ctx.moveTo(cx + sx*8, cy); ctx.lineTo(cx + sx*8, cy + sy*orn); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(cx, cy + sy*8); ctx.lineTo(cx + sx*orn, cy + sy*8); ctx.stroke();
-        ctx.beginPath(); ctx.arc(cx + sx*8, cy + sy*8, 3, 0, Math.PI*2); ctx.stroke();
-    });
+    ctx.strokeStyle = accentColor || WAR.bronze;
+    ctx.lineWidth = 1.5;
+    roundRect(ctx, x, y, w, h, 8);
+    ctx.stroke();
+
+    ctx.fillStyle = 'rgba(255,255,255,0.035)';
+    ctx.fillRect(x + 10, y + 8, Math.max(0, w - 20), 1);
 }
 
 function drawModalBg(ctx, W, H, accentColor) {
-    ctx.fillStyle = 'rgba(0,0,0,0.75)';
+    ctx.fillStyle = 'rgba(0,0,0,0.74)';
     ctx.fillRect(0, 0, W, H);
-    // Vignette
-    const vg = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, Math.max(W,H)*0.6);
-    vg.addColorStop(0, 'rgba(0,0,0,0)');
-    vg.addColorStop(1, 'rgba(0,0,0,0.4)');
+    const vg = ctx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, Math.max(W, H) * .72);
+    vg.addColorStop(0, `rgba(${hexToRgb(accentColor || WAR.bronze)},0.08)`);
+    vg.addColorStop(1, 'rgba(0,0,0,0.28)');
     ctx.fillStyle = vg;
     ctx.fillRect(0, 0, W, H);
 }
