@@ -64,7 +64,11 @@ const heroCfg = {
   bjorn:  { key: 'hero_bjorn',  glow: '#ffe84a', ultimate: 'storm', every: 4 }
 };
 const monsterCfg = {
-  grunt: 'monster_grunt', archer: 'monster_archer', berserker: 'monster_berserker', shaman: 'monster_shaman', boss: 'monster_boss'
+  grunt: { key: 'monster_grunt', glow: '#df6a26', scale: 1.74, sway: .025, bob: 2.0 },
+  archer: { key: 'monster_archer', glow: '#7fb7c7', scale: 1.68, sway: .032, bob: 2.4 },
+  berserker: { key: 'monster_berserker', glow: '#b83a2c', scale: 1.86, sway: .038, bob: 1.5 },
+  shaman: { key: 'monster_shaman', glow: '#b27ac9', scale: 1.76, sway: .02, bob: 2.8 },
+  boss: { key: 'monster_boss', glow: '#df6a26', scale: 2.05, sway: .014, bob: 1.1 }
 };
 
 const seenProjectiles = new Set();
@@ -187,23 +191,35 @@ function progress(anim, now) {
 }
 
 function getMonsterSpriteScale(monster) {
-  return monster.defId === 'boss' ? 1.95 : monster.defId === 'berserker' ? 1.78 : 1.72;
+  return (monsterCfg[monster.defId] || monsterCfg.grunt).scale;
 }
 
 function getMonsterBob(monster, now) {
   const frozen = monster.statusEffects?.some(e => e.type === 'frozen');
-  return frozen ? 0 : Math.sin(now * .004 + monster.x) * 2;
+  if (frozen) return 0;
+  const cfg = monsterCfg[monster.defId] || monsterCfg.grunt;
+  return Math.sin(now * .004 + monster.x * .03) * cfg.bob;
 }
 
 function drawMonsterSprites(now) {
   for (const m of state.monsters || []) {
     if (!m || m.dead) continue;
-    const key = monsterCfg[m.defId] || 'monster_grunt';
+    const cfg = monsterCfg[m.defId] || monsterCfg.grunt;
     const scale = getMonsterSpriteScale(m);
     const chilled = m.statusEffects?.some(e => e.type === 'chilled');
     const frozen = m.statusEffects?.some(e => e.type === 'frozen');
-    const glow = frozen ? '#8be7ff' : chilled ? '#7ec8e3' : (m.defId === 'shaman' ? '#d040ff' : m.defId === 'archer' ? '#00e5ff' : m.defId === 'berserker' ? '#ff1744' : m.defId === 'boss' ? '#ff7a18' : '#ff5522');
-    drawSvgSprite(ctx, key, m.x, m.y, m.w * scale, m.h * scale, { bob: getMonsterBob(m, now), rotation: frozen ? 0 : Math.sin(now * .002 + m.x) * .025, shadowColor: glow, shadowBlur: frozen ? 18 : 13, alpha: frozen ? .88 : 1, fallbackColor: glow });
+    const glow = frozen ? '#8be7ff' : chilled ? '#7fb7c7' : cfg.glow;
+    const bob = getMonsterBob(m, now);
+    const rotation = frozen ? 0 : Math.sin(now * .002 + m.x * .02) * cfg.sway;
+    drawSvgSprite(ctx, cfg.key, m.x, m.y, m.w * scale, m.h * scale, {
+      bob,
+      rotation,
+      shadowColor: glow,
+      shadowBlur: frozen ? 20 : chilled ? 16 : 12,
+      alpha: frozen ? .86 : 1,
+      fallbackColor: glow
+    });
+    if (chilled || frozen) drawMonsterStatusOverlay(m, now, scale, frozen);
   }
 }
 
@@ -221,6 +237,35 @@ function drawRoundedRect(x, y, w, h, r) {
   ctx.closePath();
 }
 
+function drawMonsterStatusOverlay(monster, now, scale, frozen) {
+  const spriteW = monster.w * scale;
+  const spriteH = monster.h * scale;
+  const bob = getMonsterBob(monster, now);
+  ctx.save();
+  ctx.globalAlpha = frozen ? .46 : .26;
+  ctx.strokeStyle = frozen ? '#bff3ff' : '#8bd6ec';
+  ctx.fillStyle = frozen ? 'rgba(170,238,255,.13)' : 'rgba(120,205,230,.08)';
+  ctx.lineWidth = frozen ? 2 : 1.3;
+  ctx.shadowColor = '#8be7ff';
+  ctx.shadowBlur = frozen ? 14 : 8;
+  ctx.beginPath();
+  ctx.ellipse(monster.x, monster.y + bob, spriteW * .32, spriteH * .42, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  for (let i = 0; i < 4; i++) {
+    const a = now * .001 + i * Math.PI / 2;
+    const x = monster.x + Math.cos(a) * spriteW * .22;
+    const y = monster.y + bob - spriteH * .2 + Math.sin(a) * spriteH * .12;
+    ctx.beginPath();
+    ctx.moveTo(x - 4, y);
+    ctx.lineTo(x + 4, y);
+    ctx.moveTo(x, y - 4);
+    ctx.lineTo(x, y + 4);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
 function drawMonsterHpBar(monster, now) {
   if (!monster.maxHp || monster.maxHp <= 0) return;
   const isBoss = monster.defId === 'boss';
@@ -233,14 +278,14 @@ function drawMonsterHpBar(monster, now) {
   const x = monster.x - barW / 2;
   const y = monster.y + getMonsterBob(monster, now) - spriteH / 2 - (isBoss ? 17 : 12);
   const radius = barH / 2;
-  const fill = hpPct > .55 ? '#35d46a' : hpPct > .25 ? '#ffb02e' : '#f04a3a';
+  const fill = hpPct > .55 ? '#5fb15b' : hpPct > .25 ? '#d69a35' : '#b83a2c';
 
   ctx.save();
   ctx.globalAlpha = .96;
-  ctx.fillStyle = 'rgba(8,6,4,.88)';
+  ctx.fillStyle = 'rgba(8,6,4,.92)';
   drawRoundedRect(x - 1, y - 1, barW + 2, barH + 2, radius + 1);
   ctx.fill();
-  ctx.strokeStyle = isBoss ? 'rgba(255,190,64,.95)' : 'rgba(0,0,0,.85)';
+  ctx.strokeStyle = isBoss ? 'rgba(226,173,84,.92)' : 'rgba(95,82,63,.82)';
   ctx.lineWidth = isBoss ? 1.4 : 1;
   ctx.stroke();
 
