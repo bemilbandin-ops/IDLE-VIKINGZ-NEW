@@ -65,6 +65,40 @@ function getGoldPerMinute(state) {
     return (state.sessionGold || 0) / elapsedMinutes;
 }
 
+function drawWarPanel(ctx, x, y, w, h, r = 8, accent = WAR_UI.bronze) {
+    const bg = ctx.createLinearGradient(x, y, x, y + h);
+    bg.addColorStop(0, WAR_UI.panel2);
+    bg.addColorStop(1, WAR_UI.panel);
+    ctx.fillStyle = bg;
+    roundRect(ctx, x, y, w, h, r);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(0,0,0,0.75)';
+    ctx.lineWidth = 3;
+    roundRect(ctx, x + 1.5, y + 1.5, w - 3, h - 3, Math.max(2, r - 2));
+    ctx.stroke();
+    ctx.strokeStyle = accent;
+    ctx.lineWidth = 1.3;
+    roundRect(ctx, x, y, w, h, r);
+    ctx.stroke();
+}
+
+function drawIronDivider(ctx, x1, y1, x2, y2) {
+    ctx.strokeStyle = 'rgba(111,119,128,0.55)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+}
+
+function drawSmallLabel(ctx, text, x, y, align = 'left') {
+    ctx.textAlign = align;
+    ctx.textBaseline = 'middle';
+    ctx.font = `bold 10px 'Cinzel', serif`;
+    ctx.fillStyle = WAR_UI.muted;
+    ctx.fillText(text, x, y);
+}
+
 function drawRunStatPanel(ctx, W, H, state, barH) {
     const panelW = Math.min(300, Math.max(240, W * 0.28));
     const panelH = 126;
@@ -72,20 +106,12 @@ function drawRunStatPanel(ctx, W, H, state, barH) {
     const panelY = barH + 12;
 
     ctx.save();
-    ctx.globalAlpha = 0.94;
-    ctx.fillStyle = 'rgba(9, 8, 6, 0.86)';
-    roundRect(ctx, panelX, panelY, panelW, panelH, 10);
-    ctx.fill();
-    ctx.globalAlpha = 1;
-    ctx.strokeStyle = 'rgba(212,160,23,0.65)';
-    ctx.lineWidth = 1.5;
-    roundRect(ctx, panelX, panelY, panelW, panelH, 10);
-    ctx.stroke();
+    drawWarPanel(ctx, panelX, panelY, panelW, panelH, 8, 'rgba(180,122,45,0.75)');
 
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
     ctx.shadowBlur = 0;
-    ctx.fillStyle = '#f0c040';
+    ctx.fillStyle = WAR_UI.bronzeBright;
     ctx.font = `bold 11px 'Cinzel', serif`;
     ctx.fillText('RUN STATS', panelX + 12, panelY + 16);
 
@@ -100,10 +126,10 @@ function drawRunStatPanel(ctx, W, H, state, barH) {
 
     rows.forEach(([label, value], i) => {
         const y = panelY + 38 + i * 17;
-        ctx.fillStyle = 'rgba(210,196,160,0.72)';
+        ctx.fillStyle = WAR_UI.muted;
         ctx.font = `10px 'Crimson Text', serif`;
         ctx.fillText(label, panelX + 12, y);
-        ctx.fillStyle = '#fff3b0';
+        ctx.fillStyle = WAR_UI.text;
         ctx.font = `bold 11px 'Cinzel', serif`;
         ctx.textAlign = 'right';
         ctx.fillText(value, panelX + panelW - 12, y);
@@ -117,67 +143,56 @@ export function drawHUD(ctx, W, H, state) {
     const barH = Math.max(52, H * 0.07);
 
     // Engraved stone background
-    const hudGrad = ctx.createLinearGradient(0, 0, 0, barH);
-    hudGrad.addColorStop(0, '#1c1510');
-    hudGrad.addColorStop(0.5, '#141008');
-    hudGrad.addColorStop(1, '#0c0a06');
-    ctx.fillStyle = hudGrad;
-    ctx.fillRect(0, 0, W, barH);
+    ctx.save();
+    drawWarPanel(ctx, 0, 0, W, barH, 0, 'rgba(180,122,45,0.78)');
 
     // Bottom border with gold accent
-    ctx.strokeStyle = '#6a4a10';
+    ctx.strokeStyle = 'rgba(0,0,0,0.75)';
     ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(0, barH); ctx.lineTo(W, barH); ctx.stroke();
-    ctx.strokeStyle = '#d4a017';
+    ctx.strokeStyle = WAR_UI.bronze;
     ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(0, barH - 2); ctx.lineTo(W, barH - 2); ctx.stroke();
 
     // Rune dividers
-    ctx.strokeStyle = 'rgba(212,160,23,0.25)';
-    ctx.lineWidth = 1;
-    [W * 0.33, W * 0.66].forEach(x => {
-        ctx.beginPath(); ctx.moveTo(x, 8); ctx.lineTo(x, barH - 8); ctx.stroke();
-    });
+    drawIronDivider(ctx, W * 0.32, 9, W * 0.32, barH - 10);
+    drawIronDivider(ctx, W * 0.62, 9, W * 0.62, barH - 10);
 
     // ─ Left: Wave info
     const displayWave = Math.min(state.currentWave + 1, 20);
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
 
-    ctx.fillStyle = 'rgba(212,160,23,0.5)';
-    ctx.font = `10px 'Cinzel', serif`;
-    ctx.fillText('WAVE', W * 0.03, barH * 0.32);
+    drawSmallLabel(ctx, 'WAVE', W * 0.03, barH * 0.32);
 
-    ctx.fillStyle = '#f0c040';
+    ctx.fillStyle = WAR_UI.bronzeBright;
     ctx.font = `bold ${Math.round(barH * 0.38)}px 'Cinzel', serif`;
-    ctx.shadowColor = '#d4a017'; ctx.shadowBlur = 8;
+    ctx.shadowColor = WAR_UI.ember; ctx.shadowBlur = 7;
     ctx.fillText(`${displayWave}`, W * 0.03, barH * 0.68);
     ctx.shadowBlur = 0;
 
-    ctx.fillStyle = 'rgba(200,180,120,0.6)';
+    ctx.fillStyle = WAR_UI.muted;
     ctx.font = `12px 'Crimson Text', serif`;
     ctx.fillText(`/ 20`, W * 0.03 + barH * 0.3, barH * 0.68);
 
     // Wave progress bar (thin, under wave text)
     const wPct = displayWave / 20;
     const wBarX = W * 0.03, wBarY = barH - 7, wBarW = W * 0.28, wBarH = 3;
-    ctx.fillStyle = '#1a1008';
+    ctx.fillStyle = '#0b0705';
     ctx.fillRect(wBarX, wBarY, wBarW, wBarH);
     const wGrad = ctx.createLinearGradient(wBarX, 0, wBarX + wBarW, 0);
-    wGrad.addColorStop(0, '#8b5a10');
-    wGrad.addColorStop(1, '#f0c040');
+    wGrad.addColorStop(0, WAR_UI.timber2);
+    wGrad.addColorStop(1, WAR_UI.bronzeBright);
     ctx.fillStyle = wGrad;
     ctx.fillRect(wBarX, wBarY, wBarW * wPct, wBarH);
 
     // ─ Center: Party level + XP
     ctx.textAlign = 'center';
-    ctx.fillStyle = 'rgba(212,160,23,0.5)';
-    ctx.font = `10px 'Cinzel', serif`;
-    ctx.fillText('PARTY LEVEL', W / 2, barH * 0.25);
+    drawSmallLabel(ctx, 'PARTY LEVEL', W / 2, barH * 0.25, 'center');
 
-    ctx.fillStyle = '#f0c040';
+    ctx.fillStyle = WAR_UI.text;
     ctx.font = `bold ${Math.round(barH * 0.42)}px 'Cinzel', serif`;
-    ctx.shadowColor = '#d4a017'; ctx.shadowBlur = 10;
+    ctx.shadowColor = WAR_UI.bronze; ctx.shadowBlur = 8;
     ctx.fillText(`${state.party.level}`, W / 2, barH * 0.62);
     ctx.shadowBlur = 0;
 
@@ -185,28 +200,27 @@ export function drawHUD(ctx, W, H, state) {
     const xpNeeded = getExpNeededForPartyLevel(state.party.level);
     const xpPct = Math.min(1, state.party.exp / xpNeeded);
     const xBarX = W / 2 - W * 0.1, xBarY = barH - 7, xBarW = W * 0.2;
-    ctx.fillStyle = '#1a1008';
+    ctx.fillStyle = '#0b0705';
     ctx.fillRect(xBarX, xBarY, xBarW, 3);
-    ctx.fillStyle = '#7ec8e3';
+    ctx.fillStyle = WAR_UI.frost;
     ctx.fillRect(xBarX, xBarY, xBarW * xpPct, 3);
 
     // ─ Right: Gold, kept left of the Quit button
     const goldRight = Math.min(W * 0.76, W - 132);
     ctx.textAlign = 'right';
-    ctx.fillStyle = 'rgba(212,160,23,0.5)';
-    ctx.font = `10px 'Cinzel', serif`;
-    ctx.fillText('GOLD', goldRight, barH * 0.25);
+    drawSmallLabel(ctx, 'GOLD', goldRight, barH * 0.25, 'right');
 
     // Coin icon
     const coinX = goldRight - 48;
     const coinY = barH * 0.62;
     drawCoin(ctx, coinX, coinY, 10);
 
-    ctx.fillStyle = '#f0c040';
+    ctx.fillStyle = WAR_UI.bronzeBright;
     ctx.font = `bold ${Math.round(barH * 0.38)}px 'Cinzel', serif`;
-    ctx.shadowColor = '#d4a017'; ctx.shadowBlur = 8;
+    ctx.shadowColor = WAR_UI.ember; ctx.shadowBlur = 7;
     ctx.fillText(formatGold(getDisplayedGold(state)), goldRight, barH * 0.65);
     ctx.shadowBlur = 0;
+    ctx.restore();
 
     drawRunStatPanel(ctx, W, H, state, barH);
 }
@@ -235,15 +249,16 @@ export function drawHeroPanel(ctx, W, H, state) {
     const panelY = H - panelH;
     const t = Date.now();
 
-    // Panel bg
     const pg = ctx.createLinearGradient(0, panelY, 0, H);
-    pg.addColorStop(0, '#0e0c08'); pg.addColorStop(1, '#060504');
+    pg.addColorStop(0, '#21150d');
+    pg.addColorStop(.45, '#130d09');
+    pg.addColorStop(1, '#080605');
     ctx.fillStyle = pg; ctx.fillRect(0, panelY, W, panelH);
 
     // Top border
-    ctx.strokeStyle = '#d4a017'; ctx.lineWidth = 1.5;
+    ctx.strokeStyle = WAR_UI.bronze; ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.moveTo(0, panelY); ctx.lineTo(W, panelY); ctx.stroke();
-    ctx.strokeStyle = 'rgba(212,160,23,0.3)'; ctx.lineWidth = 1;
+    ctx.strokeStyle = 'rgba(180,122,45,0.35)'; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(0, panelY + 3); ctx.lineTo(W, panelY + 3); ctx.stroke();
 
     const spacing = Math.min(Math.max(W * 0.26, 150), 260);
@@ -259,13 +274,8 @@ export function drawHeroPanel(ctx, W, H, state) {
         ctx.save();
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillStyle = 'rgba(0,0,0,0.42)';
-        roundRect(ctx, cx - 48, heroY + panelH * 0.20, 96, 30, 9);
-        ctx.fill();
-        ctx.strokeStyle = hero.dead ? '#333' : `${HERO_CFG[hero.id] || '#d4a017'}88`;
-        ctx.lineWidth = 1;
-        roundRect(ctx, cx - 48, heroY + panelH * 0.20, 96, 30, 9);
-        ctx.stroke();
+        const cardAccent = hero.dead ? '#333' : `${HERO_CFG[hero.id] || WAR_UI.bronze}88`;
+        drawWarPanel(ctx, cx - 52, heroY + panelH * 0.19, 104, 48, 8, cardAccent);
         ctx.fillStyle = hero.dead ? '#555' : (HERO_CFG[hero.id] || '#d4a017');
         ctx.font = `bold 10px 'Cinzel', serif`;
         ctx.fillText((hero.name || hero.id).toUpperCase(), cx, heroY + panelH * 0.28);
@@ -281,7 +291,7 @@ export function drawHeroPanel(ctx, W, H, state) {
         const hpX = cx - hpW / 2;
         const hpY = heroY + panelH * 0.55;
         const hpPct = hero.hp / hero.maxHp;
-        const hpColor = hero.dead ? '#333' : hpPct > 0.5 ? '#4caf50' : hpPct > 0.25 ? '#ff9800' : '#f44336';
+        const hpColor = hero.dead ? '#333' : hpPct > 0.5 ? WAR_UI.hpGood : hpPct > 0.25 ? WAR_UI.hpWarn : WAR_UI.hpBad;
         drawHealthBar(ctx, hpX, hpY, hpW, hpH, hpPct, hpColor, !hero.dead);
         ctx.restore();
     });
@@ -314,7 +324,7 @@ export function drawBarricade(ctx, W, H, state) {
 
     // HP bar above barricade
     const hpBarW = bW, hpBarH = 10;
-    const hpColor = pct > 0.5 ? '#4caf50' : pct > 0.25 ? '#ff9800' : '#f44336';
+    const hpColor = pct > 0.5 ? WAR_UI.hpGood : pct > 0.25 ? WAR_UI.hpWarn : WAR_UI.hpBad;
     drawHealthBar(ctx, bX, bY - 26, hpBarW, hpBarH, pct, hpColor, true);
     // HP label
     ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
@@ -337,14 +347,9 @@ export function drawBarricade(ctx, W, H, state) {
 
         // Plank wood gradient
         const woodG = ctx.createLinearGradient(px, bY, px, bY + bH);
-        if (state.barricade.dead) {
-            woodG.addColorStop(0, '#1a0e06');
-            woodG.addColorStop(1, '#0a0603');
-        } else {
-            woodG.addColorStop(0, `hsl(25,${50 - damage*30}%,${30 - damage*10}%)`);
-            woodG.addColorStop(0.4, `hsl(25,${44 - damage*25}%,${26 - damage*8}%)`);
-            woodG.addColorStop(1, `hsl(20,${36 - damage*20}%,${18 - damage*6}%)`);
-        }
+        woodG.addColorStop(0, state.barricade.dead ? '#170b05' : '#5b351c');
+        woodG.addColorStop(0.45, state.barricade.dead ? '#0d0704' : '#3a2414');
+        woodG.addColorStop(1, state.barricade.dead ? '#080503' : '#1d120b');
         ctx.fillStyle = woodG;
         ctx.fillRect(px + 1, bY + sag, plankW - 2, bH);
 
@@ -361,7 +366,7 @@ export function drawBarricade(ctx, W, H, state) {
 
         // Metal bolts
         [bY + bH * 0.25, bY + bH * 0.75].forEach(boltY => {
-            ctx.fillStyle = '#7a8a90';
+            ctx.fillStyle = WAR_UI.iron;
             ctx.beginPath(); ctx.arc(px + plankW / 2, boltY + sag, 4, 0, Math.PI * 2); ctx.fill();
             ctx.strokeStyle = '#4a5a60'; ctx.lineWidth = 1;
             ctx.stroke();
@@ -385,7 +390,7 @@ export function drawBarricade(ctx, W, H, state) {
 
     // Top cap beam
     const capG = ctx.createLinearGradient(bX, bY - 8, bX, bY + 4);
-    capG.addColorStop(0, state.barricade.dead ? '#160b04' : '#6b4018');
+    capG.addColorStop(0, state.barricade.dead ? '#160b04' : WAR_UI.bronze);
     capG.addColorStop(1, state.barricade.dead ? '#0d0703' : '#3a2010');
     ctx.fillStyle = capG;
     ctx.fillRect(bX - 6, bY - 8, bW + 12, 12);
