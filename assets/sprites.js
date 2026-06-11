@@ -14,7 +14,22 @@ const C = {
 };
 
 function svgWrap(body) {
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128"><defs><filter id="g"><feDropShadow dx="0" dy="0" stdDeviation="3" flood-color="#fff" flood-opacity=".45"/></filter></defs>${body}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+    <defs>
+      <filter id="g"><feDropShadow dx="0" dy="0" stdDeviation="3" flood-color="#fff" flood-opacity=".45"/></filter>
+      <filter id="softGlow"><feDropShadow dx="0" dy="0" stdDeviation="2.6" flood-color="#f1c16a" flood-opacity=".34"/></filter>
+      <filter id="coldGlow"><feDropShadow dx="0" dy="0" stdDeviation="2.8" flood-color="#8fd8ef" flood-opacity=".38"/></filter>
+      <filter id="emberGlow"><feDropShadow dx="0" dy="0" stdDeviation="3.2" flood-color="#f06a2a" flood-opacity=".48"/></filter>
+      <linearGradient id="iron" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#c6c0ad"/><stop offset=".48" stop-color="#7b7f81"/><stop offset="1" stop-color="#292f33"/>
+      </linearGradient>
+      <linearGradient id="leather" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#6c3c20"/><stop offset="1" stop-color="#2a140b"/>
+      </linearGradient>
+      <linearGradient id="hide" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#7a5432"/><stop offset="1" stop-color="#22130c"/>
+      </linearGradient>
+    </defs>${body}</svg>`;
 }
 
 function heroSvg(id) {
@@ -28,9 +43,110 @@ function heroSvg(id) {
 }
 
 function monsterSvg(id) {
-  const [glow, body, bone] = C[id] || C.grunt;
-  const boss = id === 'boss';
-  return svgWrap(`<ellipse cx="64" cy="120" rx="${boss ? 50 : 36}" ry="8" fill="#000" opacity=".42"/><path d="M${boss ? 22 : 36} 113 L${boss ? 30 : 42} 58 C${boss ? 34 : 47} ${boss ? 25 : 39} ${boss ? 94 : 81} ${boss ? 25 : 39} ${boss ? 99 : 87} 58 L${boss ? 107 : 94} 113 Z" fill="${body}" stroke="#0b1117" stroke-width="4"/><circle cx="64" cy="37" r="${boss ? 25 : 20}" fill="${body}" stroke="#071016" stroke-width="4"/><path d="M44 28 L25 14 L37 45 M84 28 L103 14 L91 45" fill="${bone}" stroke="#101820" stroke-width="3"/><circle cx="56" cy="38" r="4" fill="${glow}" filter="url(#g)"/><circle cx="72" cy="38" r="4" fill="${glow}" filter="url(#g)"/><path d="M54 56 C61 63 69 63 76 56" fill="none" stroke="#08080a" stroke-width="4" stroke-linecap="round"/><path d="M38 69 L17 88 L24 110 L40 101 L49 78 Z M90 69 L111 88 L104 110 L88 101 L79 78 Z" fill="${body}" stroke="#0b1117" stroke-width="3"/>`);
+  if (id === 'archer') return archerSvg();
+  if (id === 'berserker') return berserkerSvg();
+  if (id === 'shaman') return shamanSvg();
+  if (id === 'boss') return bossSvg();
+  return gruntSvg();
+}
+
+function gruntSvg() {
+  return svgWrap(`
+    <ellipse cx="64" cy="119" rx="37" ry="8" fill="#000" opacity=".42"/>
+    <path d="M42 111 L48 68 C50 50 77 48 83 68 L90 111 Z" fill="url(#leather)" stroke="#120a06" stroke-width="3.5"/>
+    <path d="M39 70 C30 74 23 86 20 101 L33 107 L45 83 Z" fill="#4b2917" stroke="#120a06" stroke-width="3"/>
+    <path d="M87 70 C101 74 108 86 110 101 L97 107 L83 83 Z" fill="#4b2917" stroke="#120a06" stroke-width="3"/>
+    <circle cx="64" cy="39" r="18" fill="#6c3a20" stroke="#130907" stroke-width="3"/>
+    <path d="M45 32 C49 13 79 13 84 32 C72 26 57 26 45 32Z" fill="#312018" stroke="#0d0705" stroke-width="3"/>
+    <path d="M49 29 L34 17 L40 43 M79 29 L94 17 L88 43" fill="#b9a985" stroke="#15100b" stroke-width="3" stroke-linejoin="round"/>
+    <circle cx="57" cy="39" r="3.5" fill="#ff8a32" filter="url(#emberGlow)"/>
+    <circle cx="71" cy="39" r="3.5" fill="#ff8a32" filter="url(#emberGlow)"/>
+    <path d="M55 53 C61 58 69 58 75 53" fill="none" stroke="#160806" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="38" cy="78" r="18" fill="#392216" stroke="#a47838" stroke-width="4"/>
+    <path d="M26 78 H50 M38 66 V91" stroke="#7b5330" stroke-width="3" stroke-linecap="round"/>
+    <path d="M85 86 L106 63" stroke="#4a2a17" stroke-width="6" stroke-linecap="round"/>
+    <path d="M101 58 L114 51 L109 67 Z" fill="url(#iron)" stroke="#171b1d" stroke-width="2.5"/>
+    <path d="M48 75 L64 92 L80 75 L85 111 L43 111 Z" fill="#201613" opacity=".72"/>
+  `);
+}
+
+function archerSvg() {
+  return svgWrap(`
+    <ellipse cx="64" cy="119" rx="32" ry="7" fill="#000" opacity=".38"/>
+    <path d="M41 112 L49 63 C52 45 75 43 82 63 L89 112 Z" fill="#25313a" stroke="#090d10" stroke-width="3.5"/>
+    <path d="M45 55 C48 24 80 23 84 55 C73 49 57 49 45 55Z" fill="#34251a" stroke="#0a0604" stroke-width="3"/>
+    <path d="M49 53 C55 38 73 38 80 53 L75 64 L53 64 Z" fill="#6b5035" stroke="#160c08" stroke-width="2.5"/>
+    <path d="M53 37 L42 21 M75 37 L86 21" stroke="#a89672" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="58" cy="55" r="3" fill="#8fd8ef" filter="url(#coldGlow)"/>
+    <circle cx="70" cy="55" r="3" fill="#8fd8ef" filter="url(#coldGlow)"/>
+    <path d="M33 70 C22 82 21 99 33 110" fill="none" stroke="#6a4529" stroke-width="5" stroke-linecap="round"/>
+    <path d="M95 67 C111 82 111 101 95 114" fill="none" stroke="#9b7446" stroke-width="5" stroke-linecap="round"/>
+    <path d="M94 67 C111 82 111 101 95 114" fill="none" stroke="#1b1008" stroke-width="2" stroke-linecap="round"/>
+    <path d="M92 64 L97 116" stroke="#d8c9a6" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M44 73 L30 83 L27 101 L40 98 L52 80 Z" fill="#2b1b13" stroke="#0e0805" stroke-width="2.5"/>
+    <path d="M56 72 L70 83 L82 72 L84 112 L46 112 Z" fill="#171d22" opacity=".82"/>
+    <path d="M58 84 L78 76" stroke="#8fd8ef" stroke-width="2" opacity=".8" filter="url(#coldGlow)"/>
+  `);
+}
+
+function berserkerSvg() {
+  return svgWrap(`
+    <ellipse cx="64" cy="119" rx="43" ry="9" fill="#000" opacity=".44"/>
+    <path d="M31 112 L39 65 C43 42 85 42 91 65 L99 112 Z" fill="url(#hide)" stroke="#100806" stroke-width="4"/>
+    <path d="M35 62 L19 75 L16 102 L34 108 L45 77 Z" fill="#4a2c1a" stroke="#0e0705" stroke-width="3"/>
+    <path d="M93 62 L109 75 L112 102 L94 108 L83 77 Z" fill="#4a2c1a" stroke="#0e0705" stroke-width="3"/>
+    <path d="M35 61 C42 49 51 43 64 43 C77 43 87 49 94 61 C85 54 43 54 35 61Z" fill="#392215" stroke="#140906" stroke-width="3"/>
+    <circle cx="64" cy="38" r="20" fill="#744121" stroke="#120806" stroke-width="3.5"/>
+    <path d="M45 27 L31 12 L38 41 M83 27 L97 12 L90 41" fill="#b99b65" stroke="#17100b" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M49 37 L60 42 M79 37 L68 42" stroke="#ff503f" stroke-width="4" stroke-linecap="round" filter="url(#emberGlow)"/>
+    <path d="M55 54 C61 61 70 61 76 54" fill="none" stroke="#220705" stroke-width="4" stroke-linecap="round"/>
+    <path d="M55 59 L46 111 M73 59 L84 111" stroke="#b83a2c" stroke-width="3" stroke-linecap="round"/>
+    <path d="M90 89 L109 69" stroke="#4a2a17" stroke-width="7" stroke-linecap="round"/>
+    <path d="M104 63 L118 54 L116 75 L101 73 Z" fill="url(#iron)" stroke="#15191b" stroke-width="3"/>
+    <path d="M39 87 L24 72 L20 94 Z" fill="url(#iron)" stroke="#15191b" stroke-width="2.5"/>
+  `);
+}
+
+function shamanSvg() {
+  return svgWrap(`
+    <ellipse cx="64" cy="119" rx="34" ry="8" fill="#000" opacity=".4"/>
+    <path d="M38 113 C42 78 40 55 55 43 C61 38 70 38 76 43 C91 55 87 79 92 113 Z" fill="#201326" stroke="#09050c" stroke-width="4"/>
+    <path d="M43 66 C31 75 26 89 25 108 L40 111 L49 79 Z" fill="#2b1830" stroke="#09050c" stroke-width="3"/>
+    <path d="M84 65 C96 73 102 90 103 109 L88 112 L79 79 Z" fill="#2b1830" stroke="#09050c" stroke-width="3"/>
+    <path d="M47 42 C52 22 78 22 83 42 C73 35 57 35 47 42Z" fill="#332318" stroke="#0d0705" stroke-width="3"/>
+    <circle cx="64" cy="45" r="16" fill="#5f3922" stroke="#120806" stroke-width="3"/>
+    <circle cx="58" cy="47" r="3" fill="#c786df" filter="url(#softGlow)"/>
+    <circle cx="70" cy="47" r="3" fill="#c786df" filter="url(#softGlow)"/>
+    <path d="M54 62 C60 65 68 65 74 62" fill="none" stroke="#15070a" stroke-width="3" stroke-linecap="round"/>
+    <path d="M52 75 L64 91 L76 75" fill="none" stroke="#b17ac7" stroke-width="2" opacity=".78" filter="url(#softGlow)"/>
+    <path d="M92 111 L99 46" stroke="#4a2a17" stroke-width="5" stroke-linecap="round"/>
+    <path d="M99 44 L91 30 L107 31 Z" fill="#c8b88d" stroke="#15100b" stroke-width="2.5"/>
+    <circle cx="99" cy="38" r="7" fill="#6f3c82" stroke="#d6a1e8" stroke-width="2" filter="url(#softGlow)"/>
+    <path d="M46 83 C57 89 71 89 82 83" fill="none" stroke="#6d4b39" stroke-width="2.5"/>
+    <circle cx="49" cy="86" r="3" fill="#c8b88d"/><circle cx="64" cy="89" r="3" fill="#c8b88d"/><circle cx="79" cy="86" r="3" fill="#c8b88d"/>
+  `);
+}
+
+function bossSvg() {
+  return svgWrap(`
+    <ellipse cx="64" cy="119" rx="52" ry="10" fill="#000" opacity=".48"/>
+    <path d="M21 113 L30 59 C35 28 94 28 100 59 L108 113 Z" fill="#2b211b" stroke="#090605" stroke-width="5"/>
+    <path d="M31 60 L14 78 L13 107 L34 113 L47 77 Z" fill="#3b281d" stroke="#090605" stroke-width="4"/>
+    <path d="M97 60 L114 78 L115 107 L94 113 L81 77 Z" fill="#3b281d" stroke="#090605" stroke-width="4"/>
+    <circle cx="64" cy="37" r="24" fill="#70411f" stroke="#100705" stroke-width="4"/>
+    <path d="M38 30 C43 7 85 7 90 30 C78 22 50 22 38 30Z" fill="#1f1d1a" stroke="#0a0807" stroke-width="4"/>
+    <path d="M41 25 L30 8 L51 20 M87 25 L98 8 L77 20" fill="#b59a68" stroke="#15100b" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M42 19 L49 3 L57 18 L64 0 L72 18 L80 3 L86 19" fill="url(#iron)" stroke="#111416" stroke-width="3.2" stroke-linejoin="round"/>
+    <circle cx="55" cy="40" r="4" fill="#ff5b24" filter="url(#emberGlow)"/>
+    <circle cx="73" cy="40" r="4" fill="#ff5b24" filter="url(#emberGlow)"/>
+    <path d="M54 58 C61 66 70 66 78 58" fill="none" stroke="#160605" stroke-width="4.5" stroke-linecap="round"/>
+    <path d="M39 70 L64 92 L89 70 L96 113 L32 113 Z" fill="#151515" opacity=".74"/>
+    <path d="M43 72 L29 90 L36 104 L51 84 Z M85 72 L99 90 L92 104 L77 84 Z" fill="url(#iron)" stroke="#111416" stroke-width="3"/>
+    <path d="M94 88 L115 62" stroke="#4a2a17" stroke-width="8" stroke-linecap="round"/>
+    <path d="M109 55 L124 44 L121 72 L104 70 Z" fill="#8a3425" stroke="#140706" stroke-width="3"/>
+    <path d="M28 88 L14 72 L10 99 Z" fill="url(#iron)" stroke="#111416" stroke-width="3"/>
+    <path d="M48 79 C56 86 72 86 81 79" fill="none" stroke="#b47a2d" stroke-width="3"/>
+  `);
 }
 
 function svgFor(key) {
