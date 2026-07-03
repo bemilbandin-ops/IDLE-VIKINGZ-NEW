@@ -115,7 +115,7 @@ function getCritChance(hero, sourceHeroId) {
 
 function applyDamage(state, monster, amount, sourceHeroId, tags = {}) {
     if (!monster || monster.dead) return;
-    let dmg = amount;
+    let dmg = Number.isFinite(amount) ? amount : 0;
 
     if (state.glacialTouch && monster.statusEffects?.some(e => e.type === 'chilled' || e.type === 'frozen')) dmg *= 1.2;
     if (monster.superconducted && (sourceHeroId === 'astrid' || sourceHeroId === 'hilda')) dmg *= 1.25;

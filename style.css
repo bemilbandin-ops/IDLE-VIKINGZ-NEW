@@ -1,33 +1,84 @@
-@import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Crimson+Text:ital,wght@0,400;0,700;1,400&display=swap');
 
-:root {
-    --color-bg:       #0a0d14;
-    --color-bg2:      #0f1520;
-    --color-gold:     #d4a017;
-    --color-gold2:    #f0c040;
-    --color-ember:    #e8622a;
-    --color-steel:    #8a9ba8;
-    --color-frost:    #7ec8e3;
-    --color-red:      #9b2020;
-    --color-earth:    #5d4037;
-    --font-heading:   'Cinzel Decorative', serif;
-    --font-title:     'Cinzel', serif;
-    --font-body:      'Crimson Text', serif;
-}
-
-* { margin: 0; padding: 0; box-sizing: border-box; }
-
-html, body {
-    width: 100%; height: 100%;
-    background: var(--color-bg);
-    font-family: var(--font-body);
+body {
+    margin: 0;
     overflow: hidden;
-    cursor: crosshair;
+    background-color: #0c0e10;
+    color: #e2c19b;
+    font-family: 'Crimson Text', serif;
 }
 
-#gameCanvas {
+canvas {
     display: block;
     width: 100vw;
     height: 100vh;
-    image-rendering: pixelated;
+}
+
+#debug-panel {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(0, 0, 0, 0.8);
+    padding: 10px;
+    border-radius: 5px;
+    font-family: monospace;
+    font-size: 12px;
+    pointer-events: none;
+    z-index: 100;
+}
+
+/* Stitch Dark Norse Animations & Utilities */
+@keyframes snowfall {
+    0% { transform: translateY(-10vh) translateX(0); opacity: 0; }
+    20% { opacity: 0.8; }
+    100% { transform: translateY(100vh) translateX(50px); opacity: 0.2; }
+}
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+@keyframes glowPulse {
+    0%, 100% { filter: drop-shadow(0 0 5px rgba(226,193,155,0.4)); }
+    50% { filter: drop-shadow(0 0 15px rgba(226,193,155,0.8)); }
+}
+.snow-particle {
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+    pointer-events: none;
+    animation: snowfall linear infinite;
+}
+.iron-border {
+    border: 4px solid #4e453c;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.8), 2px 2px 5px rgba(0,0,0,0.5);
+    background: linear-gradient(145deg, #1a1c1e, #0c0e10);
+    position: relative;
+}
+.iron-border::before {
+    content: '';
+    position: absolute;
+    top: 2px; left: 2px; right: 2px; bottom: 2px;
+    border: 1px solid rgba(226, 193, 155, 0.1);
+    pointer-events: none;
+}
+.viking-button {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    text-transform: uppercase;
+}
+.viking-button:hover {
+    box-shadow: inset 0 0 15px rgba(226, 193, 155, 0.3), 0 0 20px rgba(226, 193, 155, 0.15);
+    transform: translateY(-1px);
+    border-color: #e2c19b;
+}
+.viking-button:active {
+    transform: translateY(2px) scale(0.98);
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.6);
+}
+.parallax-bg {
+    background-attachment: fixed;
+    background-size: cover;
+    background-position: center;
+}
+.fog-overlay {
+    background: linear-gradient(0deg, rgba(18,20,22,0.9) 0%, rgba(18,20,22,0.4) 50%, rgba(18,20,22,0.8) 100%);
 }

@@ -1,6 +1,11 @@
+Object.defineProperty(CanvasRenderingContext2D.prototype, 'shadowBlur', {
+    get: function() { return 0; },
+    set: function(val) {}
+});
+
 import { state } from './src/gameState.js';
 import { ctx, getW, getH, clearScreen, afterDraw, drawProjectiles, spawnHitParticles, triggerShake, drawDebugOverlay } from './src/canvas.js';
-import { drawTitleScreen, drawLevelSelectScreen, drawCombatOverlays, handleClick } from './src/screens.js';
+import { drawTitleScreen, drawLevelSelectScreen, drawCombatOverlays, handleClick, drawShopOverlay, drawHeroUpgradeOverlay, drawGearOverlay, drawAchievementsOverlay } from './src/screens.js';
 import { resetLevelState } from './src/gameState.js';
 import { drawHUD, drawHeroPanel, drawBarricade, tickTorches } from './src/ui.js';
 import { spawnWave, updateMonsters, checkWaveComplete, loadProgress, onLevelFailed, initWaveTracking } from './src/waves.js';
@@ -63,6 +68,21 @@ document.addEventListener('visibilitychange', () => {
 
 // Save on tab close/refresh
 window.addEventListener('beforeunload', () => { saveGameState(state); });
+
+window.addEventListener('ui-action', (e) => {
+    switch (e.detail) {
+        case 'enter-battle': state.screen = 'levelSelect'; break;
+        case 'hero-upgrades': state.heroUpgradeOpen = true; break;
+        case 'gear': state.gearOpen = true; break;
+        case 'shop': state.shopOpen = true; break;
+        case 'achievements': state.achievementsOpen = true; break;
+        case 'retreat': 
+            state.screen = 'title'; 
+            if (state.heroes) state.heroes.forEach(h => { h.dead = false; h.hp = h.maxHp; });
+            break;
+        case 'auto-skills': state.autoSkills = !state.autoSkills; break;
+    }
+});
 
 const canvas = document.getElementById('gameCanvas');
 
@@ -256,27 +276,37 @@ function drawCurrentLevelTint(ctx, W, H) {
 function draw(now) {
     const W = getW(), H = getH();
     clearScreen(now);
-    drawCurrentLevelTint(ctx, W, H);
 
+    if (state.lastTime === 0) state.lastTime = now;
+    state.lastTime = now;
+
+    drawCurrentLevelTint(ctx, W, H);
+    
     if (state.screen === 'title') {
-        drawTitleScreen(ctx, W, H, state);
+        // drawTitleScreen(ctx, W, H, state);
+        if (state.shopOpen) drawShopOverlay(ctx, W, H, state);
+        if (state.heroUpgradeOpen) drawHeroUpgradeOverlay(ctx, W, H, state);
+        if (state.gearOpen) drawGearOverlay(ctx, W, H, state);
+        if (state.achievementsOpen) drawAchievementsOverlay(ctx, W, H, state);
     } else if (state.screen === 'levelSelect') {
         drawLevelSelectScreen(ctx, W, H, state);
     } else if (state.screen === 'combat') {
-        drawHUD(ctx, W, H, state);
+        // drawHUD(ctx, W, H, state);
         drawBarricade(ctx, W, H, state);
         drawProjectiles(ctx, state);
-        drawHeroPanel(ctx, W, H, state);
+        // drawHeroPanel(ctx, W, H, state);
         drawCombatOverlays(ctx, W, H, state);
     }
 
     // Offline popup always drawn on top
-    if (state.pendingOfflineGold > 0) {
+    if (state.offlineTimeLeft > 0) {
         drawOfflinePopup(ctx, W, H);
     }
 
     drawDebugOverlay(ctx, W, H, state, fps);
     afterDraw();
+    
+    if (window.updateDOMUI) window.updateDOMUI();
 }
 
 function loop(now) {

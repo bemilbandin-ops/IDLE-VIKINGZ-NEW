@@ -365,7 +365,7 @@ function drawDefeatScreen(ctx, W, H, state) {
 }
 
 // ── Shop Overlay ──────────────────────────────────────────────────────────────
-function drawShopOverlay(ctx, W, H, state) {
+export function drawShopOverlay(ctx, W, H, state) {
     drawModalBg(ctx, W, H, '#d4a017');
 
     const { pW, pH, pX, pY } = getShopPanelDims(W, H);
@@ -423,7 +423,7 @@ function drawShopOverlay(ctx, W, H, state) {
 }
 
 // ── Hero Upgrade Overlay ──────────────────────────────────────────────────────
-function drawHeroUpgradeOverlay(ctx, W, H, state) {
+export function drawHeroUpgradeOverlay(ctx, W, H, state) {
     drawModalBg(ctx, W, H, '#7ec8e3');
 
     const { pW, pH, pX, pY } = getHeroUpgradePanelDims(W, H);
@@ -545,7 +545,7 @@ function drawHeroUpgradeOverlay(ctx, W, H, state) {
 }
 
 // ── Gear Overlay ──────────────────────────────────────────────────────────────
-function drawGearOverlay(ctx, W, H, state) {
+export function drawGearOverlay(ctx, W, H, state) {
     drawModalBg(ctx, W, H, '#b07af0');
     const pW = Math.min(W * 0.80, 720), pH = H * 0.80;
     const pX = W / 2 - pW / 2, pY = H / 2 - pH / 2;
@@ -689,7 +689,7 @@ function handleGearOverlayClick(state, mouse, W, H) {
 
 
 // ── Achievements Overlay ─────────────────────────────────────────────────────
-function drawAchievementsOverlay(ctx, W, H, state) {
+export function drawAchievementsOverlay(ctx, W, H, state) {
     drawModalBg(ctx, W, H, '#f0c040');
     const pW = Math.min(W * 0.84, 760), pH = H * 0.82;
     const pX = W / 2 - pW / 2, pY = H / 2 - pH / 2;

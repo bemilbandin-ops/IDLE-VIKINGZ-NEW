@@ -253,6 +253,9 @@ export function updateMonsters(state, dt) {
 
         if (isFrozen) {
             monster.statusEffects = activeEffects;
+            if (monster.hp <= 0 || isNaN(monster.hp)) {
+                defeatMonster(state, monster);
+            }
             return;
         }
 
@@ -264,7 +267,7 @@ export function updateMonsters(state, dt) {
             monster.y = barricadeY - monster.h;
 
             // Check if hero projectiles killed this monster while it was at the barricade
-            if (monster.hp <= 0) {
+            if (monster.hp <= 0 || isNaN(monster.hp)) {
                 defeatMonster(state, monster);
                 return;
             }
@@ -282,14 +285,14 @@ export function updateMonsters(state, dt) {
             if (monster.attackTimer >= ATTACK_INTERVAL) {
                 monster.attackTimer -= ATTACK_INTERVAL;
                 state.barricade.hp -= monster.atk;
-                if (state.barricade.hp <= 0) state.barricade.dead = true;
+                if (state.barricade.hp <= 0 || isNaN(state.barricade.hp)) state.barricade.dead = true;
             }
             return;
         }
 
         monster.y += effectiveSpeed * dt;
 
-        if (monster.hp <= 0) {
+        if (monster.hp <= 0 || isNaN(monster.hp)) {
             defeatMonster(state, monster);
         }
     });

@@ -1,14 +1,148 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vikingfall - Idle Game</title>
+    
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@600;700;800&family=Work+Sans:wght@400;500&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script>
+    tailwind.config = {
+        darkMode: "class",
+        theme: {
+            extend: {
+                "colors": {
+                    "primary-fixed-dim": "#e2c19b", "error": "#ffb4ab", "outline": "#9a8f84", "background": "#121416",
+                    "surface": "#121416", "surface-container-high": "#282a2c", "on-error": "#690005",
+                    "surface-container-highest": "#333537", "inverse-surface": "#e2e2e5", "on-error-container": "#ffdad6",
+                    "surface-container-low": "#1a1c1e", "primary": "#e2c19b", "surface-container": "#1e2022",
+                    "on-background": "#e2e2e5", "on-surface-variant": "#d1c4b8", "primary-container": "#8c7150",
+                    "on-primary-container": "#fffeff"
+                },
+                "fontFamily": {
+                    "headline-md": ["Epilogue"], "body-md": ["Work Sans"], "headline-lg": ["Epilogue"],
+                    "body-lg": ["Work Sans"], "label-caps": ["JetBrains Mono"], "headline-sm": ["Epilogue"]
+                }
+            }
+        }
+    }
+    </script>
+    
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="bg-background text-on-background overflow-hidden font-body-md select-none">
+    
+    <div id="ui-layer" style="position: absolute; inset: 0; z-index: 10; pointer-events: none;">
+        <!-- Snow Particle Container -->
+        <div id="snow-container" style="position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: -1;"></div>
+        
+        <!-- MAIN MENU SECTION -->
+        <div id="main-menu-section" style="display: none; width: 100%; height: 100%; flex-direction: column;">
+            <!-- Top Navigation Bar -->
+            <header class="relative z-10 flex justify-between items-center px-4 h-16 w-full border-b-4 border-outline-variant bg-surface-container-low shadow-md pointer-events-auto">
+                <div class="flex items-center gap-4">
+                    <button id="btn-achievements" class="iron-border p-1.5 flex items-center justify-center viking-button group bg-surface">
+                        <span class="material-symbols-outlined text-primary group-hover:rotate-12 transition-transform">emoji_events</span>
+                    </button>
+                </div>
+                <div class="flex items-center gap-6">
+                    <div class="flex items-center gap-3 bg-surface-container-highest px-4 py-1.5 rounded-lg border border-outline-variant shadow-inner">
+                        <span class="font-label-caps text-[12px] text-on-surface-variant tracking-widest font-bold">GOLD</span>
+                        <div class="flex items-center gap-1">
+                            <span id="mm-gold" class="font-headline-sm text-2xl text-primary font-bold tracking-tighter">0</span>
+                            <span class="material-symbols-outlined text-primary-fixed-dim" style="font-variation-settings: 'FILL' 1;">monetization_on</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            <!-- Main Content Area -->
+            <main class="relative z-10 flex-grow flex flex-col items-center justify-center p-4 mb-20 pointer-events-auto">
+                <div class="text-center mb-12 flex flex-col items-center">
+                    <h1 class="font-headline-lg text-5xl text-primary font-bold drop-shadow-[0_0_15px_rgba(226,193,155,0.5)] scale-110 mb-2">VIKINGFALL</h1>
+                    <div class="flex items-center gap-4 w-full max-w-md">
+                        <div class="h-[1px] flex-grow bg-gradient-to-r from-transparent via-outline-variant to-transparent"></div>
+                        <p class="font-label-caps text-[12px] text-on-surface-variant italic tracking-[0.2em] whitespace-nowrap">DEFEND THE GATES OF MIDGARD</p>
+                        <div class="h-[1px] flex-grow bg-gradient-to-r from-transparent via-outline-variant to-transparent"></div>
+                    </div>
+                </div>
+                <div class="w-full max-w-sm p-2 bg-black/40 rounded-xl backdrop-blur-sm border border-outline-variant/30 shadow-2xl">
+                    <div class="iron-border p-6 rounded-lg flex flex-col gap-4">
+                        <button id="btn-enter-battle" class="iron-border w-full py-6 flex flex-col items-center justify-center group viking-button bg-primary-container/20">
+                            <span class="material-symbols-outlined text-primary mb-1 text-3xl group-hover:scale-110 transition-transform">swords</span>
+                            <span class="font-headline-sm text-2xl text-primary font-bold">ENTER BATTLE</span>
+                        </button>
+                        <div class="grid grid-cols-1 gap-3">
+                            <button id="btn-upgrades" class="iron-border w-full py-4 flex items-center justify-center gap-3 viking-button bg-surface">
+                                <span class="material-symbols-outlined text-on-surface-variant">keyboard_double_arrow_up</span>
+                                <span class="font-label-caps text-[12px] font-bold text-on-surface tracking-widest">HERO UPGRADES</span>
+                            </button>
+                            <button id="btn-gear" class="iron-border w-full py-4 flex items-center justify-center gap-3 viking-button bg-surface">
+                                <span class="material-symbols-outlined text-on-surface-variant">shield</span>
+                                <span class="font-label-caps text-[12px] font-bold text-on-surface tracking-widest">GEAR</span>
+                            </button>
+                            <button id="btn-shop" class="iron-border w-full py-4 flex items-center justify-center gap-3 viking-button bg-surface">
+                                <span class="material-symbols-outlined text-on-surface-variant">storefront</span>
+                                <span class="font-label-caps text-[12px] font-bold text-on-surface tracking-widest">SHOP</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- BATTLE SCREEN SECTION -->
+        <div id="battle-screen-section" style="display: none; width: 100%; height: 100%;">
+            <!-- TOP HUD -->
+            <header class="bg-surface-container-low border-b-4 border-outline-variant shadow-md flex justify-between items-center px-6 h-16 w-full pointer-events-auto">
+                <div class="flex gap-12 items-center">
+                    <div class="flex flex-col">
+                        <span class="font-label-caps text-[12px] font-bold tracking-widest text-on-surface-variant">WAVE</span>
+                        <span class="font-headline-sm text-2xl font-bold text-primary"><span id="bs-wave">1</span> <span class="text-on-surface-variant font-label-caps text-sm">/ 20</span></span>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <span class="font-label-caps text-[12px] font-bold tracking-widest text-on-surface-variant">PARTY LEVEL</span>
+                        <span id="bs-party-level" class="font-headline-md text-3xl font-bold text-primary drop-shadow-[0_0_8px_rgba(226,193,155,0.6)]">1</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-6">
+                    <button id="auto-skills-btn" class="bg-surface-container-high border-2 border-primary-container px-4 py-2 rounded-lg text-primary font-label-caps text-xs shadow-lg hover:bg-primary-container hover:text-on-primary-container transition-all">
+                        AUTO SKILLS: ON
+                    </button>
+                    <div class="bg-surface-container-highest px-4 py-1 rounded border border-outline-variant flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">monetization_on</span>
+                        <span id="bs-gold" class="font-headline-sm text-2xl font-bold text-primary">0</span>
+                    </div>
+                    <button id="btn-retreat" class="flex items-center gap-2 px-4 py-2 bg-red-900/50 text-red-200 font-label-caps text-[12px] font-bold tracking-widest rounded border-2 border-red-700 hover:bg-red-800 transition-all active:scale-95">
+                        <span class="material-symbols-outlined text-sm">close</span> QUIT
+                    </button>
+                </div>
+            </header>
+
+            <!-- RUN STATS PANEL -->
+            <aside class="absolute top-24 right-8 z-40 w-64 bg-surface-container-highest/90 border-2 border-outline-variant p-4 rounded shadow-2xl backdrop-blur-sm pointer-events-auto">
+                <h3 class="font-label-caps text-[12px] font-bold tracking-widest text-primary border-b border-outline-variant pb-2 mb-3">RUN STATS</h3>
+                <div class="space-y-2 text-xs font-label-caps font-bold tracking-wider">
+                    <div class="flex justify-between"><span class="text-on-surface-variant">Party DPS</span><span id="stat-dps" class="text-on-surface">0</span></div>
+                    <div class="flex justify-between"><span class="text-on-surface-variant">Gold earned</span><span id="stat-gold-earned" class="text-on-surface">0</span></div>
+                    <div class="flex justify-between"><span class="text-on-surface-variant">Gold / min</span><span id="stat-gold-min" class="text-on-surface">0/M</span></div>
+                    <div class="flex justify-between pt-2 border-t border-outline-variant"><span class="text-on-surface-variant">Progress</span><span id="stat-progress" class="text-primary">LV 1 • WAVE 1/20</span></div>
+                </div>
+            </aside>
+
+
+        </div>
+    </div>
+
     <canvas id="gameCanvas"></canvas>
+    
     <script type="module" src="main.js"></script>
     <script type="module" src="assets/visualPatch.js"></script>
+    <script type="module">
+        import { initUI, updateDOMUI } from "./src/uiController.js";
+        initUI();
+        window.updateDOMUI = updateDOMUI;
+    </script>
 </body>
 </html>
