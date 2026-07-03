@@ -1,5 +1,5 @@
 # Viking Idle Game — Agent Workflow & Build Plan
-**For use with VS Code + Kilo Code (single agent, sequential tasks)**
+
 
 ---
 
@@ -602,25 +602,6 @@ export function drawSprite(ctx, key, x, y, w, h, flipX = false) {
 
 Monsters face downward. If sprite faces right, set `flipX: false`. Sprites are drawn centered on the entity's x, y position.
 
----
-
-## How to Prompt Each Task (Kilo Code)
-
-The project root contains `AGENT_RULES.md`. Use `@` mentions so the agent always reads the rules and plan fresh — no copy-pasting needed.
-
-**Template for every task prompt:**
-
-```
-@AGENT_RULES.md
-@GAME_PLAN.md
-
-Complete TASK [N] — [Task Name].
-Do not proceed to any other task.
-```
-
-That's it. The agent gets full rules + full plan context every time. If you tweak a rule mid-project, edit `AGENT_RULES.md` once and it's automatically picked up on the next prompt.
-
-**File to create in your project root:** `AGENT_RULES.md` (provided as a separate file alongside this plan).
 
 ---
 
