@@ -225,6 +225,7 @@ function update(dt) {
 
         state.gameSpeed = state.autoPickSkills ? 2 : 1;
         const combatDt = dt * state.gameSpeed;
+        state.combatElapsedSeconds = (state.combatElapsedSeconds || 0) + combatDt;
         const hpBefore = {};
         state.monsters.forEach(m => { hpBefore[m.id] = m.hp; });
 
